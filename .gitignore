@@ -27,3 +27,10 @@
 *.exe
 *.out
 *.app
+
+README.html
+*.un~
+*.swo
+*.swp
+build/*
+*.DS_Store
