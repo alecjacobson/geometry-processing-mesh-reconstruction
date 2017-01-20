@@ -34,3 +34,4 @@ README.html
 *.swp
 build/*
 *.DS_Store
+solution/*.cpp

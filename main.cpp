@@ -1,3 +1,4 @@
+#include "poisson_surface_reconstruction.h"
 #include <igl/list_to_matrix.h>
 #include <igl/viewer/Viewer.h>
 #include <Eigen/Core>
@@ -33,7 +34,42 @@ int main(int argc, char *argv[])
     N = D.rightCols(3);
   }
 
+  // Reconstruct mesh
+  Eigen::MatrixXd V;
+  Eigen::MatrixXi F;
+  poisson_surface_reconstruction(P,N,V,F);
+
   // Create a libigl Viewer object and toggle between point cloud and mesh
+  igl::viewer::Viewer viewer;
+  std::cout<<std::endl;
+  std::cout<<"  P,p      view point cloud"<<std::endl;
+  std::cout<<"  M,m      view mesh"<<std::endl;
+  const auto set_points = [&]()
+  {
+    viewer.data.clear();
+    viewer.data.set_points(P);
+    viewer.data.add_edges(P,(P+0.01*N).eval(),Eigen::RowVector3d(1,0,0));
+  };
+  set_points();
+  viewer.callback_key_pressed = [&](igl::viewer::Viewer&, unsigned int key,int)
+  {
+    switch(key)
+    {
+      case 'P':
+      case 'p':
+        set_points();
+        return true;
+      case 'M':
+      case 'm':
+        viewer.data.clear();
+        viewer.data.set_mesh(V,F);
+        return true;
+    }
+    return false;
+  };
+  viewer.core.point_size = 2;
+  viewer.launch();
+
   return EXIT_SUCCESS;
 }
 
