@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<link type="text/css" rel="stylesheet" href="shared/css/style.css"/>
+<script type="text/javascript" src="shared/js/MathJax/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</head>
+<body>
+
+<div style="display:none">
+$$\newcommand{\mat}[1]{\mathbf{#1}}$$
+$$\newcommand{\vec}[1]{\mathbf{#1}}$$
+$$\newcommand{\G}{\mat{G}}$$
+$$\newcommand{\D}{\mat{D}}$$
+$$\newcommand{\N}{\mat{N}}$$
+$$\newcommand{\P}{\mat{P}}$$
+$$\newcommand{\S}{\mathcal{S}}$$
+$$\newcommand{\W}{\mat{W}}$$ 
+$$\newcommand{\R}{\mathbb{R}}$$
+$$\newcommand{\c}{\vec{c}}$$
+$$\newcommand{\g}{\vec{g}}$$
+$$\newcommand{\n}{\vec{n}}$$
+$$\renewcommand{\v}{\vec{v}}$$
+$$\newcommand{\p}{\vec{p}}$$
+$$\newcommand{\x}{\vec{x}}$$
+$$\newcommand{\transpose}{{\mathsf T}}$$
+</div>
+
+<h1 id="geometryprocessing–meshreconstruction">Geometry Processing – Mesh Reconstruction</h1>
+
+<blockquote>
+<p><strong>To get started:</strong> Fork this repository then issue</p>
+
+<pre><code>git clone --recursive http://github.com/[username]/geometry-processing-mesh-reconstruction.git
+</code></pre>
+</blockquote>
+
+<h2 id="installationlayoutandcompilation">Installation, Layout, and Compilation</h2>
+
+<p>See
+<a href="http://github.com/[username]/geometry-processing-introduction">introduction</a>.</p>
+
+<h2 id="execution">Execution</h2>
+
+<p>Once built, you can execute the assignment from inside the <code>build/</code> using </p>
+
+<pre><code>./mesh-reconstruction [path to point cloud]
+</code></pre>
+
+<h2 id="background">Background</h2>
+
+<p>In this assignment, we will be implementing a simplified version of the method
+in &#8220;Poisson Surface Reconstruction&#8221; by Kazhdan et al. 2006. (Your first &#8220;task&#8221;
+will be to read and understand this paper).</p>
+
+<p>Many scanning technologies output a set of <span class="math">\(n\)</span> point samples <span class="math">\(\P\)</span> on the
+surface of the object in question. From these points and perhaps the location
+of the camera, one can also estimate normals <span class="math">\(\N\)</span> to the surface for each point
+<span class="math">\(\p ∈ \P\)</span>.</p>
+
+<p>For shape analysis, visualization and other downstream geometry processing
+phases, we would like to convert this finitely sampled <em>point cloud</em> data into
+an <em>explicit continuous surface representation</em>: i.e., a <a href="https://en.wikipedia.org/wiki/Triangulation%5F(topology)">triangle
+mesh</a> (a special case
+of a <a href="https://en.wikipedia.org/wiki/Polygon%5Fmesh">polygon mesh</a>).</p>
+
+<h3 id="voxel-basedimplicitsurface">Voxel-based Implicit Surface</h3>
+
+<p>Converting the point cloud directly to a triangle mesh makes it very difficult
+to ensure that the mesh meets certain <em>topological</em> postconditions: i.e., that
+it is <a href="https://en.wikipedia.org/wiki/Piecewise%5Flinear%5Fmanifold">manifold</a>,
+<a href="https://en.wikipedia.org/wiki/Manifold#Manifold%5Fwith%5Fboundary">closed</a>,
+and has a small number of
+<a href="https://en.wikipedia.org/wiki/Genus%5F(mathematics)">holes</a>.</p>
+
+<p>Instead we will first convert the point cloud <em>sampling representation</em> into a
+an <em><a href="https://en.wikipedia.org/wiki/Implicit%5Fsurface">implicit surface
+representation</a></em>: where the
+unknown surface is defined as the
+<a href="https://en.wikipedia.org/wiki/Level%5Fset">level-set</a> of some function <span class="math">\(g: \R³
+→ \R\)</span> mapping all points in space to a scalar value. For example, we may define
+the surface <span class="math">\(∂\S\)</span> of some solid, volumetric shape <span class="math">\(\S\)</span> to be all points <span class="math">\(\x ∈
+\R³\)</span> such that <span class="math">\(g(x) = σ\)</span>, where we may arbitrarily set <span class="math">\(σ=½\)</span>.</p>
+
+<p><span class="math">\[
+∂\S = \{\x ∈ \R³ | g(\x)  = σ\}.
+\]</span></p>
+
+<p>On the computer, it is straightforward
+<a href="https://en.wikipedia.org/wiki/Discretization">discretize</a> an implicit
+function. We define a regular 3D grid of
+<a href="http://en.wikipedia.org/wiki/Voxel">voxels</a> containing at least the <a href="https://en.wikipedia.org/wiki/Minimum%5Fbounding%5Fbox">bounding
+box</a> of <span class="math">\(\S\)</span>. At each
+node in the grid <span class="math">\(\x_{i,j,k}\)</span> we store the value of the implicit function
+<span class="math">\(g(\x_{i,j,k})\)</span>. This defines <span class="math">\(g\)</span> <em>everywhere</em> in the grid via <a href="https://en.wikipedia.org/wiki/Trilinear_interpolation">trilinear
+interpolation</a>. </p>
+
+<figure>
+<img src="images/trilinear-interpolation.jpg" alt="" />
+</figure>
+
+<p>For example, consider a point <span class="math">\(\x = (⅓,¼,½)\)</span> lying in the middle of the
+bottom-most, front-most, left-most cell. We know the values at the eight
+corners. Trilinear interpolation can be understood as <a href="https://en.wikipedia.org/wiki/Linear_interpolation">linear
+interpolation</a> in the
+<span class="math">\(x\)</span>-direction by <span class="math">\(⅓\)</span> on each <span class="math">\(x\)</span>-axis-aligned edge, resulting in four values
+<em>living</em> on the same plane. These can then be linearly interpolated in the <span class="math">\(y\)</span>
+direction by <span class="math">\(¼\)</span> resulting in two points on the same line, and finally in the
+<span class="math">\(z\)</span> direction by <span class="math">\(½\)</span> to get to our evaluation point <span class="math">\((⅓,¼,½)\)</span>.</p>
+
+<p>An implicit surface stored as the level-set of a trilinearly interpolated grid
+can be <em>contoured</em> into a triangle mesh via the <a href="https://en.wikipedia.org/wiki/Marching&amp;5Fcubes">Marching Cubes
+Algorithm</a>.
+For the purposes of this assignment, we will treat this as a <a href="https://en.wikipedia.org/wiki/Black%5Fbox">black
+box</a>. Instead, we focus on
+determining what values for <span class="math">\(g\)</span> to store on the grid.</p>
+
+<h2 id="characteristicfunctionsofsolids">Characteristic functions of solids</h2>
+
+<p>We assume that our set of points <span class="math">\(\P\)</span> lie on the surface <span class="math">\(∂\S\)</span> of some physical
+<a href="https://en.wikipedia.org/wiki/Solid">solid</a> object <span class="math">\(\S\)</span>. This solid object
+must have some non-trivial volume that we can calculate <em>abstractly</em> as the
+integral of unit density over the solid:</p>
+
+<p><span class="math">\[
+∫\limits_\S 1 \;dA.                                                        %_
+\]</span></p>
+
+<p>We can rewrite this definite integral as an indefinite integral over all of
+<span class="math">\(\R^3\)</span>:</p>
+
+<p><span class="math">\[
+∫\limits_{\R³} χ_\S(\x) \;dA,
+\]</span></p>
+
+<p>by introducing the <a href="https://en.wikipedia.org/wiki/Indicator%5Ffunction">characteristic
+function</a> of <span class="math">\(\S\)</span>, that is
+<em>one</em> for points inside of the shape and <em>zero</em> for points outside of <span class="math">\(\S\)</span>:</p>
+
+<p><span class="math">\[
+χ_\S(\x) = \begin{cases}
+  1 & \text{ if $\x ∈ \S$ } \\
+  0 & \text{ otherwise}.
+\end{cases}                                                             %_
+\]</span></p>
+
+<p>Compared to typical <a href="https://en.wikipedia.org/wiki/Implicit%5Fsurface">implicit surface
+functions</a>, this function
+represents the surface <span class="math">\(∂\S\)</span> of the shape <span class="math">\(\S\)</span> as the <em>discontinuity</em> between
+the one values and the zero values. Awkwardly, the gradient of the
+characteristic function <span class="math">\(∇χ_\S\)</span> is <em>not defined</em> along <span class="math">\(∂\S\)</span>.</p>
+
+<p>One of the key observations made in [Kazhdan et al. 2006] is that the gradient
+of a infinitesimally <a href="https://en.wikipedia.org/wiki/Mollifier">mollified</a>
+(smoothed) characteristic function: </p>
+
+<ol>
+<li>points in the direction of the normal near the surface <span class="math">\(∂\S\)</span>, and</li>
+<li>is zero everywhere else.</li>
+</ol>
+
+<p>Our goal will be to use our points <span class="math">\(\P\)</span> and normals <span class="math">\(\N\)</span> to <em>optimize</em> an
+implicit function <span class="math">\(g\)</span> over a regular grid, so that its gradient <span class="math">\(∇g\)</span> meets
+these two criteria. In that way, our <span class="math">\(g\)</span> will be an approximation of the
+mollified characteristic function.</p>
+
+<h2 id="poissonsurfacereconstruction">Poisson surface reconstruction</h2>
+
+<h3 id="or:howilearnedtostopworryingandminimizesquaredgradients">Or: how I learned to stop worrying and minimize squared Gradients</h3>
+
+<p><span id=assumptions>
+Let us start by making two assumptions:
+</span></p>
+
+<ol>
+<li>we know how to compute <span class="math">\(∇g\)</span> at each node location <span class="math">\(\x_{i,j,k}\)</span>, and</li>
+<li>our input points <span class="math">\(\P\)</span> all lie perfectly at grid nodes:
+ <span class="math">\(∃\ \x_{i,j,k} = \p_ℓ\)</span>.</li>
+</ol>
+
+<p>(We will find out these assumptions are not realistic, but let&#8217;s defer that
+discussion for now.)</p>
+
+<p>If our points <span class="math">\(\P\)</span> lie at grid points, then our corresponding normals <span class="math">\(\N\)</span> also
+<em>live</em> at grid points. This leads to a very simple set of linear equations to
+define a function <span class="math">\(g\)</span> with a gradient equal to the surface normal at the
+surface and zero gradient away from the surface:</p>
+
+<p><span class="math">\[
+∇g(\x_{i,j,k}) = \v_{i,j,k} := \begin{cases}
+  \vphantom{\left(\begin{array}{c}0\\0\\0\end{array}\right)}
+  \n_ℓ & \text{ if $∃\ \p_ℓ = \x_{i,j,k}$}, \\
+  \left(\begin{array}{c}
+    0\\
+    0\\
+    0\end{array}\right) & \text{ otherwise}.
+\end{cases}
+\]</span></p>
+
+<p>This is a <em>vector-valued</em> equation. The gradients, normals and zero-vectors are
+three-dimensional (e.g., <span class="math">\(∇g ∈ \R³\)</span>). In effect, this is <em>three equations</em> for
+every grid node.</p>
+
+<p>Since we only need a single number at each grid node (the value of <span class="math">\(g\)</span>), we
+have <em>too many</em> equations.</p>
+
+<p>Like many geometry processing algorithms confronted with such an <a href="https://en.wikipedia.org/wiki/Overdetermined%5Fsystem">over
+determined</a>, we will
+<em>optimize</em> for the solution that best <em>minimizes</em> the error of equation:</p>
+
+<p><span class="math">\[
+‖ ∇g(\x_{i,j,k})  - \v_{i,j,k}‖².
+\]</span></p>
+
+<p>We will treat the error of each grid location equally by minimizing the sum
+over all grid locations:</p>
+
+<p><span class="math">\[
+\min_\g ∑_i ∑_j ∑_k ½ ‖ ∇g(\x_{i,j,k})  - \v_{i,j,k}‖²,
+\]</span></p>
+
+<p>where <span class="math">\(\g\)</span> (written in boldface) is a vector of <em>unknown</em> grid-nodes values,
+where <span class="math">\(g_{i,j,k} = g(\x_{i,j,k})\)</span>. </p>
+
+<p>Part of the convenience of working on a regular grid is that we can use the
+<a href="https://en.wikipedia.org/wiki/Finite_difference_method">finite difference
+method</a> to approximate
+the gradient <span class="math">\(∇g\)</span> on the grid.</p>
+
+<p>After revisiting <a href="#assumptions">our assumptions</a>, we will be able to compute
+approximations of
+the <span class="math">\(x\)</span>-, <span class="math">\(y\)</span>- and <span class="math">\(z\)</span>-components of <span class="math">\(∇g\)</span> via a <a href="https://en.wikipedia.org/wiki/Sparse%5Fmatrix">sparse
+matrix</a> multiplication of
+a &#8220;gradient matrix&#8221; <span class="math">\(\G\)</span> and our vector of unknown grid values <span class="math">\(\g\)</span>. We will be
+able to write the
+minimization problem above in matrix form:</p>
+
+<p><span class="math">\[
+\min_\g ½ ‖ \G \g - \v ‖²,
+\]</span></p>
+
+<p>or equivalently after expanding the norm:</p>
+
+<p><span class="math">\[
+\min_\g ½ \g^\transpose \G^\transpose \G \g - \g^\transpose \G^\transpose \v + \text{constant},
+\]</span></p>
+
+<p>This is a quadratic &#8220;energy&#8221; function of the variables of <span class="math">\(\g\)</span>, its minimum occurs when
+an infinitesimal change in <span class="math">\(\g\)</span> produces no change in the energy:</p>
+
+<p><span class="math">\[
+\frac{∂}{∂\g} ½ \g^\transpose \G^\transpose \G \g - \g^\transpose \G^\transpose \v = 0.
+\]</span></p>
+
+<p>Applying this derivative gives us a <em>sparse</em> system of linear equations</p>
+
+<p><span class="math">\[
+\G^\transpose \G \g = \G^\transpose \v.
+\]</span></p>
+
+<p>We will assume that we can solve this using a black box sparse solver.</p>
+
+<p>Now, let&#8217;s revisit <a href="#assumptions">our assumptions</a>.</p>
+
+<h3 id="gradientsonaregulargrid">Gradients on a regular grid</h3>
+
+<p>The gradient of a function <span class="math">\(g\)</span> in 3D is nothing more than a vector containing
+partial derivatives in each coordinate direction:</p>
+
+<p><span class="math">\[
+∇g(\x) = \left(\begin{array}{c}
+    \frac{∂g(\x)}{∂x} \\
+    \frac{∂g(\x)}{∂y} \\
+    \frac{∂g(\x)}{∂z}
+  \end{array}\right).
+\]</span></p>
+
+<p>We will approximate each partial derivative individually. Let&#8217;s consider the
+partial derivative in the <span class="math">\(x\)</span> direction, <span class="math">\(∂g(\x)/∂x\)</span>, and we will assume
+without loss of generality that what we derive applies <em>symmetrically</em> for <span class="math">\(y\)</span>
+and <span class="math">\(z\)</span>.</p>
+
+<p>The partial derivative in the <span class="math">\(x\)</span>-direction is a one-dimensional derivative.
+This couldn&#8217;t be easier to do with finite differences. We approximate the
+derivative of the function <span class="math">\(g\)</span> with respect to the <span class="math">\(x\)</span> direction is the
+difference between the function evaluated at one grid node and at the grid node
+<em>before</em> it in the <span class="math">\(x\)</span>-direction then divided by the spatial distance between
+adjacent nodes <span class="math">\(h\)</span> (i.e., the grid step size):</p>
+
+<p><span class="math">\[
+\frac{∂g(\x_{i-½,j,k})}{∂x} = \frac{g_{i,j,k} - g_{i-1,j,k}}{h},
+\]</span></p>
+
+<p>where we use the index <span class="math">\(i-½\)</span> to indicate that this derivative in the
+<span class="math">\(x\)</span>-direction lives on a <a href="https://en.wikipedia.org/wiki/Staggered%5Fgrid">staggered
+grid</a> <em>in between</em> the grid
+nodes where the function values for <span class="math">\(g\)</span>.</p>
+
+<p>The following pictures show a 2D example, where <span class="math">\(g\)</span> lives on the nodes of a
+5×5 blue grid:</p>
+
+<figure>
+<img src="images/primary-grid.jpg" alt="" />
+</figure>
+
+<p>The partial derivatives of <span class="math">\(g\)</span> with respect to the <span class="math">\(x\)</span>-direction <span class="math">\(∂g(\x)/∂x\)</span>
+live on a <strong>4</strong>×5 green, staggered grid:</p>
+
+<figure>
+<img src="images/staggered-grid-x.jpg" alt="" />
+</figure>
+
+<p>The partial derivatives of <span class="math">\(g\)</span> with respect to the <span class="math">\(y\)</span>-direction <span class="math">\(∂g(\x)/∂y\)</span>
+live on a 5×<strong>4</strong> yellow, staggered grid:</p>
+
+<figure>
+<img src="images/staggered-grid-x-and-y.jpg" alt="" />
+</figure>
+
+<p>Letting <span class="math">\(\g ∈ \R^{n_xn_yn_z × 1}\)</span> be column vector of function values on the
+<em>primary grid</em> (blue in the example pictures), we can construct a sparse matrix
+<span class="math">\(\D^x ∈ \R^{(n_x-1)n_yn_z × n_xn_yn_z}\)</span> so that each row <span class="math">\(\D^x_{i-½,j,k} ∈
+\R^{1 × n_xn_yn_z}\)</span> computes the partial derivative at the corresponding
+staggered grid location <span class="math">\(\x_{i-½,j,k}\)</span>. The $ℓ$th entry in that row receives a
+value only for neighboring primary grid nodes:</p>
+
+<p><span class="math">\[
+\D^x_{i-½,j,k}(ℓ) = 
+  \begin{cases}
+  -1 & \text{ if $ℓ = i-1$ }\\
+   1 & \text{ if $ℓ = i$ }\\
+   0 & \text{ otherwise}
+  \end{cases}.
+\]</span></p>
+
+<blockquote>
+<h4 id="indexing3darrays">Indexing 3D arrays</h4>
+
+<p>Now, obviously in our code we cannot <em>index</em> the column vector <span class="math">\(\g\)</span> by a
+triplet of numbers <span class="math">\(\{i,j,k\}\)</span> or the rows of <span class="math">\(\D^x\)</span> by the triplet
+<span class="math">\({i-½,j,k}\)</span>. We will assume that <span class="math">\(\g_{i,j,k}\)</span> refers to
+<code>g(i+j*n_x+k*n_y*n_x)</code>. Similarly, for the staggered grid subscripts
+<span class="math">\({i-½,j,k}\)</span> we will assume that <span class="math">\(\D^x_{i-½,j,k}(ℓ)\)</span> refers to the matrix
+entry <code>Dx(i+j*n_x+k*n_y*n_x,l)</code>, where the <span class="math">\(i-½\)</span> has been <em>rounded down</em>.</p>
+</blockquote>
+
+<p>We can similarly build matrices <span class="math">\(\D^y\)</span> and <span class="math">\(\D^z\)</span> and <em>stack</em> these matrices
+vertically to create a gradient matrix <span class="math">\(\G\)</span>:</p>
+
+<p><span class="math">\[
+\G = 
+\left(\begin{array}{c}
+  \D^x \\
+  \D^y \\
+  \D^z
+\end{array}\right)
+  ∈ \R^{ \left((n_x-1)n_yn_z + n_x(n_y-1)n_z + n_xn_y(n_z-1)\right)×n_xn_yn_z}
+\]</span></p>
+
+<p>This implies that our vector <span class="math">\(\v\)</span> of zeros and normals in our minimization
+problem should not <em>live</em> on the primary, but rather it, too, should be broken
+into <span class="math">\(x\)</span>-, <span class="math">\(y\)</span>- and <span class="math">\(z\)</span>-components that live of their resepctive staggered
+grids:</p>
+
+<p><span class="math">\[
+\v = 
+\left(\begin{array}{c}
+  \v^x \\
+  \v^y \\
+  \v^z 
+\end{array}\right)
+  ∈ \R^{ \left((n_x-1)n_yn_z + n_x(n_y-1)n_z + n_xn_y(n_z-1)\right)×1}.
+\]</span></p>
+
+<p>This leads to addressing our second assumption.</p>
+
+<h3 id="b-b-b-b-buttheinputnormalsmightnotbeatgridnodelocations">B-b-b-b-but the input normals might not be at grid node locations?</h3>
+
+<p>At this point, we would <em>actually</em> liked to have had that our input normals
+were given component-wise on the staggered grid. Then we could immediate stick
+them into <span class="math">\(\v\)</span>. But this doesn&#8217;t make much sense as each normal <span class="math">\(\n_ℓ\)</span> <em>lives</em>
+at its associated point <span class="math">\(\p_ℓ\)</span>, regardless of any grids.</p>
+
+<p>To remedy this, we will distribute each component of each input normal <span class="math">\(\n_ℓ\)</span>
+to <span class="math">\(\v\)</span> at the corresponding staggered grid node location.</p>
+
+<p>For example, consider the normal <span class="math">\(\n\)</span> at some point <span class="math">\(\x_{1,¼,½}\)</span>. Conceptually,
+we&#8217;ll think of the <span class="math">\(x\)</span>-component of the normal <span class="math">\(n_x\)</span> as floating in the
+staggered grid corresponding to <span class="math">\(\D^x\)</span>, in between the eight staggered grid
+locations:</p>
+
+<p><span class="math">\[
+\x_{½,0,0},  \\
+\x_{1½,0,0},   \\
+\x_{½,1,0},  \\
+\x_{1½,1,0},   \\
+\x_{½,0,1},  \\
+\x_{1½,0,1},   \\
+\x_{½,1,1}, \text{ and } \\
+\x_{1½,1,1}
+\]</span></p>
+
+<p>Each of these staggered grid nodes has a corresponding <span class="math">\(x\)</span> value in the vector
+<span class="math">\(\v^x\)</span>.</p>
+
+<p>We will distribute <span class="math">\(n_x\)</span> to these entries in <span class="math">\(\v^x\)</span> by <em>adding</em> a partial amount
+of <span class="math">\(n_x\)</span> to each. I.e., </p>
+
+<p><span class="math">\[
+v^x_{½,0,0}  = w_{ ½,0,0}\left(\x_{1,¼,½}\right)\ n_x,  \\
+v^x_{1½,0,0} = w_{1½,0,0}\left(\x_{1,¼,½}\right)\ n_x,  \\
+\vdots \\
+v^x_{1½,1,1} = w_{1½,1,1}\left(\x_{1,¼,½}\right)\ n_x.
+\]</span>
+where <span class="math">\(w_{iِ+½,j,k}(\p)\)</span> is the trilinear interpolation <em>weight</em> associate with
+staggered grid node <span class="math">\(\x_{iِ+½,j,k}\)</span> to interpolate a value at the point <span class="math">\(\p\)</span>.
+The trilinear interpolation weights so that:</p>
+
+<p><span class="math">\[
+n_x =   \\
+  w_{ ½,0,0}( \x_{1,¼,½} ) \  v^x_{ ½,0,0} +  \\
+  w_{1½,0,0}( \x_{1,¼,½} ) \  v^x_{1½,0,0} +  \\
+  \vdots \\
+  w_{1½,1,1}( \x_{1,¼,½} )\ v^x_{1½,1,1}.
+\]</span></p>
+
+<p>Since we need to do these for the <span class="math">\(x\)</span>-component of each input normal, we will
+assemble a sparse matrix <span class="math">\(\W^x ∈ n × (n_x-1)n_yn_z\)</span> that <em>interpolates</em>
+<span class="math">\(\v^x\)</span> at each point <span class="math">\(\p\)</span>:</p>
+
+<p><span class="math">\[
+  ( \W^x \v^x ) ∈ \R^{n×1}
+\]</span></p>
+
+<p>the transpose of <span class="math">\(\W^x\)</span> is not quite its
+<a href="https://en.wikipedia.org/wiki/Invertible_matrix"><em>inverse</em></a>, but instead can
+be interpreted as <em>distributing</em> values onto staggered grid locations where
+<span class="math">\(\v^x\)</span> lives:</p>
+
+<p><span class="math">\[
+  \v^x = (\W^x)^\transpose \N^x.
+\]</span></p>
+
+<p>Using this definition of <span class="math">\(\v^x\)</span> and analogously for <span class="math">\(\v^y\)</span> and <span class="math">\(\v^z\)</span> we can
+construct the vector <span class="math">\(\v\)</span> in our energy minimization problem above.</p>
+
+<blockquote>
+<h3 id="btwwhatspoissongottodowithit">BTW, what&#8217;s <a href="https://en.wikipedia.org/wiki/Siméon_Denis_Poisson">Poisson</a> got to do with it?</h3>
+
+<p>The discrete energy minimization problem we&#8217;ve written looks like the squared
+norm of some gradients. An analogous energy in the smooth world is the
+<a href="https://en.wikipedia.org/wiki/Dirichlet's_energy">Dirichlet energy</a>:</p>
+
+<p><span class="math">\[
+  E(g) = ∫_Ω ‖∇g‖² dA
+\]</span></p>
+
+<p>to <em>minimize</em> this energy with respect to <span class="math">\(g\)</span> as an unknown <em>function</em>, we
+need to invoke <a href="https://en.wikipedia.org/wiki/Calculus_of_variations">Calculus of
+Variations</a> and
+<a href="https://en.wikipedia.org/wiki/Green's_identities#Green.27s_first_identity">Green&#8217;s First
+Identity</a>.
+In doing so we find that minimizers will satisfy:</p>
+
+<p><span class="math">\[
+  ∇⋅∇ g = 0 \text{ on Ω},
+\]</span></p>
+
+<p>known as <a href="https://en.wikipedia.org/wiki/Laplace%27s_equation">Laplaces&#8217;
+Equation</a>.</p>
+
+<p>If we instead start with a slightly different energy:</p>
+
+<p><span class="math">\[
+  E(g) = ∫_Ω ‖∇g - V‖² dA,
+\]</span></p>
+
+<p>where <span class="math">\(V\)</span> is a vector-valued function. Then applying the same machinery we
+find that minimizers will satisfy:</p>
+
+<p><span class="math">\[
+  ∇⋅∇ g = ∇⋅V \text{ on Ω},
+\]</span></p>
+
+<p>known as <a href="https://en.wikipedia.org/wiki/Poisson%27s_equation">Poisson&#8217;s
+equation</a>. </p>
+
+<p>Notice that if we interpret the transpose of our gradient matrix
+<span class="math">\(\G^\transpose\)</span> as a <em>divergence matrix</em> (we can and we should), then the
+structure of these smooth energies and equations are directly preserved in
+our discrete energies and equations.</p>
+
+<p>This kind of <em>structure preservation</em> is a major criterion for judging
+discrete methods.</p>
+</blockquote>
+
+<h3 id="choosingagoodiso-value">Choosing a good iso-value</h3>
+
+<p>Constant functions have no gradient. This means that we can add a constant
+function to our implicit function <span class="math">\(g\)</span> without changing its gradient:</p>
+
+<p><span class="math">\[
+∇g = ∇(g+c) = ∇g + ∇c = ∇g + 0.
+\]</span></p>
+
+<p>The same is true for our discrete gradient matrix <span class="math">\(\G\)</span>: if the vector of grid
+values <span class="math">\(\g\)</span> is constant then <span class="math">\(\G \g\)</span> will be a vector zeros.</p>
+
+<p>This is potentially problematic for our least squares solve: there are many
+solutions, since we can just add a constant. Fortunately, we <em>don&#8217;t really
+care</em>. It&#8217;s elegant to say that our surface is defined at <span class="math">\(g=0\)</span>, but we&#8217;d be
+just as happy declaring that our surface is defined at <span class="math">\(g=c\)</span>.</p>
+
+<p>To this end we just need to find <em>a solution</em> <span class="math">\(\g\)</span>, and then to pick a good
+iso-value <span class="math">\(σ\)</span>.</p>
+
+<p>As suggested in [Kazhdan et al. 2006], we can pick a good iso-value by
+interpolating our solution <span class="math">\(\g\)</span> at each of the input points (since we know
+they&#8217;re on the surface) and averaging their values. In matrix form using our
+interpolation matrix <span class="math">\(\W\)</span>:</p>
+
+<p><span class="math">\[
+σ = \frac{1}{n} \mathbf{1}^\transpose \W \g,
+\]</span></p>
+
+<p>where <span class="math">\(\mathbf{1} ∈ \R^{n×1}\)</span> is a vector of ones.</p>
+
+<h3 id="justhowsimplifiedfromkazhdanetal.2006isthisassignment">Just how simplified from [Kazhdan et al. 2006] is this assignment</h3>
+
+<p>Besides the insights above, a major contribution of [Kazhdan et al. 2006] was
+to setup and solve this problem on an <a href="https://en.wikipedia.org/wiki/Adaptive_mesh_refinement">adaptive
+grid</a> rather than a
+regular grid. They also track &#8220;confidence&#8221; of their input data effecting how
+they smooth and interpolate values. As a result, their method is one of the
+most highly used surface reconstruction techniques to this day.</p>
+
+<blockquote>
+<p>Consider adding your own insights to the wikipedia entry for <a href="https://en.wikipedia.org/wiki/Poisson's%5Fequation#Surface%5Freconstruction">this
+method</a>.</p>
+</blockquote>
+
+<h2 id="tasks">Tasks</h2>
+
+<h3 id="readkazhdanetal.2006">Read [Kazhdan et al. 2006]</h3>
+
+<p>This reading task is not directly graded, but it&#8217;s expected that you read and
+understand this paper before moving on to the other tasks.</p>
+
+<h3 id="srcfd_interpolate.cpp"><code>src/fd_interpolate.cpp</code></h3>
+
+<p>Given a regular finite-difference grid described by the number of nodes on each
+side (<code>nx</code>, <code>ny</code> and <code>nz</code>), the grid spacing (<code>h</code>), and the location of the
+bottom-left-front-most corner node (<code>corner</code>), and a list of points (<code>P</code>),
+construct a sparse matrix <code>W</code> of trilinear interpolation weights so that <code>P = W
+* x</code>. </p>
+
+<h3 id="srcfd_partial_derivative.cpp"><code>src/fd_partial_derivative.cpp</code></h3>
+
+<p>Given a regular finite-difference grid described by the number of nodes on each
+side (<code>nx</code>, <code>ny</code> and <code>nz</code>), the grid spacing (<code>h</code>), and a desired direction,
+construct a sparse matrix <code>D</code> to compute first partial derivatives in the given
+direction onto the <em>staggered grid</em> in that direction.</p>
+
+<h3 id="srcfd_grad.cpp"><code>src/fd_grad.cpp</code></h3>
+
+<p>Given a regular finite-difference grid described by the number of nodes on each
+side (<code>nx</code>, <code>ny</code> and <code>nz</code>), and the grid spacing (<code>h</code>), construct a sparse
+matrix <code>G</code> to compute gradients with each component on its respective staggered
+grid.</p>
+
+<blockquote>
+<h4 id="hintusefd_partial_derivativetocomputedxdyanddzand">Hint use <code>fd_partial_derivative</code> to compute <code>Dx</code>, <code>Dy</code>, and <code>Dz</code> and</h4>
+
+<p>then simply concatenate these together to make <code>G</code>.</p>
+</blockquote>
+
+<h3 id="srcpoisson_surface_reconstruction.cpp"><code>src/poisson_surface_reconstruction.cpp</code></h3>
+
+<p>Given a list of points <code>P</code> and the list of corresponding normals <code>N</code>, construct
+a implicit function <code>g</code> over a regular grid (<em>built for you</em>) using approach
+described above.</p>
+
+<p>You will need to <em>distribute</em> the given normals <code>N</code> onto the staggered grid
+values in <code>v</code> via sparse trilinear interpolation matrices <code>Wx</code>, <code>Wy</code> and <code>Wz</code>
+for each staggered grid. </p>
+
+<p>Then you will need to construct and solve the linear system <span class="math">\(\G^\transpose \G
+\g = \G^\transpose \v\)</span>.</p>
+
+<p>Determine the iso-level <code>sigma</code> to extract from the <code>g</code>.</p>
+
+<p>Feed this implicit function <code>g</code> to <code>igl::copyleft::marching_cubes</code> to contour
+this function into a triangle mesh <code>V</code> and <code>F</code>.</p>
+
+<p>Make use of <code>fd_interpolate</code> and <code>fd_grad</code>.</p>
+
+<blockquote>
+<h4 id="hint">Hint</h4>
+
+<p>Eigen has many different <a href="https://eigen.tuxfamily.org/dox-devel/group__TopicSparseSystems.html">sparse matrix
+solvers</a>.
+For these <em>very regular</em> matrices, it seems that the <a href="https://en.wikipedia.org/wiki/Conjugate_gradient_method">conjugate gradient
+method</a> will
+outperform direct methods such as <a href="https://en.wikipedia.org/wiki/Cholesky_decomposition">Cholesky
+factorization</a>. Try
+<code>Eigen::BiCGSTAB</code>.</p>
+</blockquote>
+
+<hr />
+
+<blockquote>
+<h4 id="hint">Hint</h4>
+
+<p>Debug in debug mode with assertions enabled. For Unix users on the
+command line use: </p>
+
+<pre><code>cmake -DCMAKE_BUILD_TYPE=Debug ../
+</code></pre>
+
+<p>but then try out your code in <em>release mode</em> for much better performance</p>
+
+<pre><code>cmake -DCMAKE_BUILD_TYPE=Release ../
+</code></pre>
+</blockquote>
+
+</body>
+</html>

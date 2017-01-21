@@ -522,8 +522,8 @@ side (`nx`, `ny` and `nz`), and the grid spacing (`h`), construct a sparse
 matrix `G` to compute gradients with each component on its respective staggered
 grid.
 
-**_Hint:_** use `fd_partial_derivative` to compute `Dx`, `Dy`, and `Dz` and
-then simply concatenate these together to make `G`.
+> #### Hint use `fd_partial_derivative` to compute `Dx`, `Dy`, and `Dz` and
+> then simply concatenate these together to make `G`.
 
 ### `src/poisson_surface_reconstruction.cpp`
 
@@ -536,7 +536,7 @@ values in `v` via sparse trilinear interpolation matrices `Wx`, `Wy` and `Wz`
 for each staggered grid. 
 
 Then you will need to construct and solve the linear system $\G^\transpose \G
-\g = \G^\transpose v$.
+\g = \G^\transpose \v$.
 
 Determine the iso-level `sigma` to extract from the `g`.
 
@@ -545,19 +545,23 @@ this function into a triangle mesh `V` and `F`.
 
 Make use of `fd_interpolate` and `fd_grad`.
 
-**_Hint:_** Eigen has many different [sparse matrix
-solvers](https://eigen.tuxfamily.org/dox-devel/group__TopicSparseSystems.html).
-For these _very regular_ matrices, it seems that the [conjugate gradient
-method](https://en.wikipedia.org/wiki/Conjugate_gradient_method) will
-outperform direct methods such as [Cholesky
-factorization](https://en.wikipedia.org/wiki/Cholesky_decomposition). Try
-`Eigen::BiCGSTAB`.
+> #### Hint
+> Eigen has many different [sparse matrix
+> solvers](https://eigen.tuxfamily.org/dox-devel/group__TopicSparseSystems.html).
+> For these _very regular_ matrices, it seems that the [conjugate gradient
+> method](https://en.wikipedia.org/wiki/Conjugate_gradient_method) will
+> outperform direct methods such as [Cholesky
+> factorization](https://en.wikipedia.org/wiki/Cholesky_decomposition). Try
+> `Eigen::BiCGSTAB`.
 
-**_Hint:_** Debug in debug mode with assertions enabled. For Unix users on the
-command line use: 
+-------------------------------------------------------------------------------
 
-    cmake -DCMAKE_BUILD_TYPE=Debug ../
-
-but then try out your code in _release mode_ for much better performance
-
-    cmake -DCMAKE_BUILD_TYPE=Release ../
+> #### Hint 
+> Debug in debug mode with assertions enabled. For Unix users on the
+> command line use: 
+> 
+>     cmake -DCMAKE_BUILD_TYPE=Debug ../
+> 
+> but then try out your code in _release mode_ for much better performance
+> 
+>     cmake -DCMAKE_BUILD_TYPE=Release ../
