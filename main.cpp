@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   const auto set_points = [&]()
   {
     viewer.data.clear();
-    viewer.data.set_points(P);
+    viewer.data.set_points(P,Eigen::RowVector3d(1,1,1));
     viewer.data.add_edges(P,(P+0.01*N).eval(),Eigen::RowVector3d(1,0,0));
   };
   set_points();
