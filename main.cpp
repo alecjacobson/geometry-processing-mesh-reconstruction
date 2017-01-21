@@ -1,8 +1,6 @@
 #include "poisson_surface_reconstruction.h"
-#include <igl/writeOBJ.h>
 #include <igl/list_to_matrix.h>
 #include <igl/viewer/Viewer.h>
-#include <igl/get_seconds.h>
 #include <Eigen/Core>
 #include <string>
 #include <iostream>
@@ -39,16 +37,14 @@ int main(int argc, char *argv[])
   // Reconstruct mesh
   Eigen::MatrixXd V;
   Eigen::MatrixXi F;
-  double tic = igl::get_seconds();
   poisson_surface_reconstruction(P,N,V,F);
-  std::cout<< (igl::get_seconds()-tic) << std::endl;
-  igl::writeOBJ("test.obj",V,F);
 
-  // Create a libigl Viewer object and toggle between point cloud and mesh
+  // Create a libigl Viewer object to toggle between point cloud and mesh
   igl::viewer::Viewer viewer;
-  std::cout<<std::endl;
-  std::cout<<"  P,p      view point cloud"<<std::endl;
-  std::cout<<"  M,m      view mesh"<<std::endl;
+  std::cout<<R"(
+  P,p      view point cloud
+  M,m      view mesh
+)";
   const auto set_points = [&]()
   {
     viewer.data.clear();
