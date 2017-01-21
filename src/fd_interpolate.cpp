@@ -9,4 +9,5 @@ void fd_interpolate(
   const Eigen::MatrixXd & P,
   Eigen::SparseMatrix<double> & W)
 {
+  // Add your code here
 }

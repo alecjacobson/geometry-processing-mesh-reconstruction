@@ -7,4 +7,5 @@ void fd_grad(
   const double h,
   Eigen::SparseMatrix<double> & G)
 {
+  // Add your code here
 }
