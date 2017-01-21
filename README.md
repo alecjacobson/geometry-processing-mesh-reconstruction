@@ -262,17 +262,17 @@ nodes where the function values for $g$.
 The following pictures show a 2D example, where $g$ lives on the nodes of a
 5×5 blue grid:
 
-![](images/blue_staggered_grid_2D_example-1.jpg)
+![](images/primary-grid.jpg)
 
 The partial derivatives of $g$ with respect to the $x$-direction $∂g(\x)/∂x$
 live on a **4**×5 green, staggered grid:
 
-![](images/green-staggered-grid-only-1.jpg)
+![](images/staggered-grid-x.jpg)
 
 The partial derivatives of $g$ with respect to the $y$-direction $∂g(\x)/∂y$
 live on a 5×**4** yellow, staggered grid:
 
-![](images/2d-grid-with-points-normals-and-staggering.png)
+![](images/staggered-grid-x-and-y.jpg)
 
 Letting $\g ∈ \R^{n_xn_yn_z × 1}$ be column vector of function values on the
 _primary grid_ (blue in the example pictures), we can construct a sparse matrix
@@ -490,19 +490,74 @@ regular grid. They also track "confidence" of their input data effecting how
 they smooth and interpolate values. As a result, their method is one of the
 most highly used surface reconstruction techniques to this day.
 
+> Consider adding your own insights to the wikipedia entry for [this
+> method](https://en.wikipedia.org/wiki/Poisson's%5Fequation#Surface%5Freconstruction).
+
 ## Tasks
 
 ### Read \[Kazhdan et al. 2006\]
 
-This task is not directly graded, but it's expected that you read and
+This reading task is not directly graded, but it's expected that you read and
 understand this paper before moving on to the other tasks.
 
-### point location
+### `src/fd_interpolate.cpp`
 
-### Dx, Dy, Dz and G
+Given a regular finite-difference grid described by the number of nodes on each
+side (`nx`, `ny` and `nz`), the grid spacing (`h`), and the location of the
+bottom-left-front-most corner node (`corner`), and a list of points (`P`),
+construct a sparse matrix `W` of trilinear interpolation weights so that `P = W
+* x`. 
 
-### Wx, Wy, Wz and V
+### `src/fd_partial_derivative.cpp`
 
-Consider adding your insights to the wikipedia entry for [this
-method](https://en.wikipedia.org/wiki/Poisson's%5Fequation#Surface%5Freconstruction).
+Given a regular finite-difference grid described by the number of nodes on each
+side (`nx`, `ny` and `nz`), the grid spacing (`h`), and a desired direction,
+construct a sparse matrix `D` to compute first partial derivatives in the given
+direction onto the _staggered grid_ in that direction.
 
+### `src/fd_grad.cpp`
+
+Given a regular finite-difference grid described by the number of nodes on each
+side (`nx`, `ny` and `nz`), and the grid spacing (`h`), construct a sparse
+matrix `G` to compute gradients with each component on its respective staggered
+grid.
+
+**_Hint:_** use `fd_partial_derivative` to compute `Dx`, `Dy`, and `Dz` and
+then simply concatenate these together to make `G`.
+
+### `src/poisson_surface_reconstruction.cpp`
+
+Given a list of points `P` and the list of corresponding normals `N`, construct
+a implicit function `g` over a regular grid (_built for you_) using approach
+described above.
+
+You will need to _distribute_ the given normals `N` onto the staggered grid
+values in `v` via sparse trilinear interpolation matrices `Wx`, `Wy` and `Wz`
+for each staggered grid. 
+
+Then you will need to construct and solve the linear system $\G^\transpose \G
+\g = \G^\transpose v$.
+
+Determine the iso-level `sigma` to extract from the `g`.
+
+Feed this implicit function `g` to `igl::copyleft::marching_cubes` to contour
+this function into a triangle mesh `V` and `F`.
+
+Make use of `fd_interpolate` and `fd_grad`.
+
+**_Hint:_** Eigen has many different [sparse matrix
+solvers](https://eigen.tuxfamily.org/dox-devel/group__TopicSparseSystems.html).
+For these _very regular_ matrices, it seems that the [conjugate gradient
+method](https://en.wikipedia.org/wiki/Conjugate_gradient_method) will
+outperform direct methods such as [Cholesky
+factorization](https://en.wikipedia.org/wiki/Cholesky_decomposition). Try
+`Eigen::BiCGSTAB`.
+
+**_Hint:_** Debug in debug mode with assertions enabled. For Unix users on the
+command line use: 
+
+    cmake -DCMAKE_BUILD_TYPE=Debug ../
+
+but then try out your code in _release mode_ for much better performance
+
+    cmake -DCMAKE_BUILD_TYPE=Release ../
