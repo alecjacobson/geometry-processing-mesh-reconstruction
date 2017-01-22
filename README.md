@@ -141,8 +141,10 @@ Let us start by making two assumptions:
   2. our input points $\P$ all lie perfectly at grid nodes: 
   $∃\ \x_{i,j,k} = \p_ℓ$.
 
-(We will find out these assumptions are not realistic, but let's defer that
-discussion for now.)
+We will find out these assumptions are not realistic and we will have to relax
+them (i.e., we **_will not_** make these assumptions in the completion of the
+tasks). However, it will make the following algorithmic description easier on
+the first pass.
 
 If our points $\P$ lie at grid points, then our corresponding normals $\N$ also
 _live_ at grid points. This leads to a very simple set of linear equations to
