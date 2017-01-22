@@ -37,9 +37,9 @@ void fd_interpolate(
         //index values
         //TODO: figure out why ArrayBase::floor doesn't exist?
         Eigen::RowVector3i iv = mc.unaryExpr([](double d){return floor(d);}).cast<int>();
-        iv(0) = std::min(nx-1,np.max(0,iv(0)));
-        iv(1) = std::min(ny-1,np.max(0,iv(1)));
-        iv(2) = std::min(nz-1,np.max(0,iv(2)));
+        iv(0) = std::min(nx-1,std::max(0,iv(0)));
+        iv(1) = std::min(ny-1,std::max(0,iv(1)));
+        iv(2) = std::min(nz-1,std::max(0,iv(2)));
 
         //Interpolation alphas
         Eigen::Matrix<double,2,3> a;
