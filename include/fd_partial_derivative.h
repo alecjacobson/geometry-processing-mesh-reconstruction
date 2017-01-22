@@ -1,6 +1,7 @@
 #ifndef FD_PARTIAL_DERIVATIVE_H
 #define FD_PARTIAL_DERIVATIVE_H
 #include <Eigen/Sparse>
+#include <vector>
 // Construct a partial derivative matrix for a finite-difference grid in a
 // given direction. Derivative are computed using first-order differences onto
 // a staggered grid
@@ -25,4 +26,11 @@ void fd_partial_derivative(
   const double h,
   const int dir,
   Eigen::SparseMatrix<double> & D);
+
+std::vector<Eigen::Triplet<double>> fd_partial_derivative_triplets(
+  const int nx,
+  const int ny,
+  const int nz,
+  const double h,
+  const int dir);
 #endif

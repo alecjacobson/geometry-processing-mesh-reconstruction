@@ -12,7 +12,22 @@ void fd_partial_derivative(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  int snx = (dir==0)?nx-1:nx;
+  int sny = (dir==1)?ny-1:ny;
+  int snz = (dir==2)?nz-1:nz;
+  int m = snx * sny * snz;
+  auto trips = fd_partial_derivative_triplets(nx,ny,nz,h,dir);
+  D.resize(m,nx*ny*nz);
+  D.setFromTriplets(trips.begin(),trips.end());
+}
   
+std::vector<Eigen::Triplet<double>> fd_partial_derivative_triplets(
+  const int nx,
+  const int ny,
+  const int nz,
+  const double h,
+  const int dir)
+{
   using Triplet = Eigen::Triplet<double>;
 
   int snx = (dir==0)?nx-1:nx;
@@ -47,8 +62,7 @@ void fd_partial_derivative(
       }
   }
 
-  D.resize(m,nx*ny*nz);
-  D.setFromTriplets(trips.begin(),trips.end());
+  return trips;
 
 
 
