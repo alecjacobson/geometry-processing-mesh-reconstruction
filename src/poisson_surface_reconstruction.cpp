@@ -1,6 +1,8 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <iostream>
+#include "fd_partial_derivative.h"
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,6 +49,16 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  
+  Eigen::SparseMatrix<double> D0;
+  Eigen::SparseMatrix<double> D1;
+  Eigen::SparseMatrix<double> D2;
+  fd_partial_derivative(8,2,2,h,0,D0);
+  std::cout << D0;
+  fd_partial_derivative(8,2,2,h,1,D1);
+  std::cout << D1;
+  fd_partial_derivative(8,2,2,h,2,D2);
+  std::cout << D2;
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
