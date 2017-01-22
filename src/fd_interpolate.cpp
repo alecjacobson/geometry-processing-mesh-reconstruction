@@ -10,31 +10,14 @@ void fd_interpolate(
   const Eigen::MatrixXd & P,
   Eigen::SparseMatrix<double> & W)
 {
-	////////////////////////////////////////////////////////////////////////////
-	// Construct FD grid, CONGRATULATIONS! You get this for free!
-	////////////////////////////////////////////////////////////////////////////
-	// number of input points
+
 	const int n = P.rows();
-	// Compute positions of grid nodes
-	Eigen::MatrixXd grid(nx*ny*nz, 3);
-	for (int i = 0; i < nx; i++)
-	{
-		for (int j = 0; j < ny; j++)
-		{
-			for (int k = 0; k < nz; k++)
-			{
-				// Convert subscript to index
-				const auto ind = i + j*nx + k*nx*ny;
-				grid.row(ind) = corner + h*Eigen::RowVector3d(i, j, k);
-			}
-		}
-	}
 
 	std::vector<Eigen::Triplet<double>> tripletList;
 	tripletList.reserve(n);
 	
 	for (int t = 0; t < n; ++t) {
-		double x = P(t,0);
+		double x = P(t, 0);
 		double y = P(t, 1);
 		double z = P(t, 2);
 

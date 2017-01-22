@@ -1,6 +1,9 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <fd_interpolate.h>
+#include <fd_grad.h>
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,6 +50,78 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  Eigen::SparseMatrix<double> Wx(n,(nx-1)*ny*nz);
+  Eigen::RowVector3d cornerDx = corner;
+  cornerDx(0) = cornerDx(0) + h;
+  Eigen::MatrixXd Nx = N;
+  Nx.col(1) = Eigen::MatrixXd::Zero(Nx.rows(), 1);
+  Nx.col(2) = Eigen::MatrixXd::Zero(Nx.rows(), 1);
+  fd_interpolate(nx, ny, nz, h, cornerDx, Nx, Wx);
+  Eigen::MatrixXd vx = Wx.transpose()*Nx;
+
+  Eigen::SparseMatrix<double> Wy(n,nx*(ny-1)*nz);
+  Eigen::RowVector3d cornerDy = corner;
+  cornerDy(1) = cornerDy(1) + h;
+  Eigen::MatrixXd Ny = N;
+  Ny.col(0) = Eigen::MatrixXd::Zero(Ny.rows(), 1);
+  Ny.col(2) = Eigen::MatrixXd::Zero(Ny.rows(), 1);
+  fd_interpolate(nx, ny, nz, h, cornerDy, Ny, Wy);
+  Eigen::MatrixXd vy = Wy.transpose()*Ny;
+
+  Eigen::SparseMatrix<double> Wz(n, nx*ny*(nz-1));
+  Eigen::RowVector3d cornerDz = corner;
+  cornerDz(2) = cornerDz(2) + h;
+  Eigen::MatrixXd Nz = N;
+  Nz.col(0) = Eigen::MatrixXd::Zero(Nz.rows(), 1);
+  Nz.col(1) = Eigen::MatrixXd::Zero(Nz.rows(), 1);
+  fd_interpolate(nx, ny, nz, h, cornerDz, Nz, Wz);
+  Eigen::MatrixXd vz = Wz.transpose()*Nz;
+
+  Eigen::MatrixXd v = Eigen::MatrixXd(vx.rows() + vy.rows() + vz.rows(), 1);
+  v.block(0, 0, vx.rows(), 1) = vx.col(0);
+  v.block(vx.rows(), 0, vy.rows(), 1) = vy.col(1);
+  v.block(vx.rows() + vy.rows(), 0, vz.rows(), 1) = vz.col(2);
+
+  Eigen::SparseMatrix<double> G((nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1),nx*ny*nz);
+  fd_grad(nx, ny, nz, h, G);
+
+  Eigen::SparseMatrix<double> A = G.transpose()*G;
+  Eigen::MatrixXd b = G.transpose()*v;
+
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+  solver.compute(A);
+  g = solver.solve(b);
+
+  
+  //Eigen::SparseMatrix<double> WxT = Wx.transpose();
+  //Eigen::SparseMatrix<double> WyT = Wy.transpose();
+  //Eigen::SparseMatrix<double> WzT = Wz.transpose();
+  //Eigen::SparseMatrix<double> W(WxT.rows() + WyT.rows() + WzT.rows(),n);
+  //int nnz = WxT.nonZeros() + WyT.nonZeros() + WzT.nonZeros();
+  //W.reserve(nnz);
+  //std::vector<Eigen::Triplet<double> > tripletList;
+  //tripletList.reserve(nnz);
+  //for (int c = 0; c < n; ++c) {
+	 // for (Eigen::SparseMatrix<double>::InnerIterator it(WxT, c); it; ++it) {
+		//  tripletList.push_back(Eigen::Triplet<double>(it.row(), c, it.value()));
+	 // }
+	 // for (Eigen::SparseMatrix<double>::InnerIterator it(WyT, c); it; ++it) {
+		//  tripletList.push_back(Eigen::Triplet<double>(it.row(), c, it.value()));
+	 // }
+	 // for (Eigen::SparseMatrix<double>::InnerIterator it(WzT, c); it; ++it) {
+		//  tripletList.push_back(Eigen::Triplet<double>(it.row(), c, it.value()));
+	 // }
+  //}
+  //W.setFromTriplets(tripletList.begin(), tripletList.end());
+  //W.makeCompressed();
+  //W = W.transpose();
+
+  Eigen::SparseMatrix<double> Wg(n, nx*ny*nz);
+  fd_interpolate(nx, ny, nz, h, corner, g, Wg);
+
+  Eigen::MatrixXd sigma = (1 / n)*(Eigen::MatrixXd::Ones(1, n))*Wg*g;
+
+  g = g - sigma;
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
