@@ -474,8 +474,8 @@ iso-value $σ$.
 
 As suggested in \[Kazhdan et al. 2006\], we can pick a good iso-value by
 interpolating our solution $\g$ at each of the input points (since we know
-they're on the surface) and averaging their values. In matrix form using our
-interpolation matrix $\W$:
+they're on the surface) and averaging their values. In matrix form using the
+interpolation matrix $\W$ for the _primary (non-staggered) grid_:
 
 \\[
 σ = \frac{1}{n} \mathbf{1}^\transpose \W \g,
