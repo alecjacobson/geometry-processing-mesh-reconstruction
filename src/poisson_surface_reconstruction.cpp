@@ -47,41 +47,44 @@ void poisson_surface_reconstruction(
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
 
-  double h2 = 0.5*h;
+  // Compute vx,vy,vz
   Eigen::SparseMatrix<double> Wx(n,(nx-1)*ny*nz);
-  fd_interpolate(nx-1, ny, nz, h, corner + h2*Eigen::RowVector3d(1,0,0), P, Wx);
+  fd_interpolate(nx-1, ny, nz, h, corner + 0.5*h*Eigen::RowVector3d(1,0,0), P, Wx);
   Eigen::MatrixXd vx = Wx.transpose()*N.col(0);
 
   Eigen::SparseMatrix<double> Wy(n,nx*(ny-1)*nz);
-  fd_interpolate(nx, ny-1, nz, h, corner + h2*Eigen::RowVector3d(0, 1, 0), P, Wy);
+  fd_interpolate(nx, ny-1, nz, h, corner + 0.5*h*Eigen::RowVector3d(0, 1, 0), P, Wy);
   Eigen::MatrixXd vy = Wy.transpose()*N.col(1);
 
   Eigen::SparseMatrix<double> Wz(n, nx*ny*(nz-1));
-  fd_interpolate(nx, ny, nz-1, h, corner + h2*Eigen::RowVector3d(0, 0, 1), P, Wz);
+  fd_interpolate(nx, ny, nz-1, h, corner + 0.5*h*Eigen::RowVector3d(0, 0, 1), P, Wz);
   Eigen::MatrixXd vz = Wz.transpose()*N.col(2);
 
+  // Combine vx,vy,vz into v
   Eigen::MatrixXd v = Eigen::MatrixXd(vx.rows() + vy.rows() + vz.rows(), 1);
   v.block(0, 0, vx.rows(), 1) = vx.col(0);
   v.block(vx.rows(), 0, vy.rows(), 1) = vy.col(0);
   v.block(vx.rows() + vy.rows(), 0, vz.rows(), 1) = vz.col(0);
 
+  // Compute grad matrix G
   Eigen::SparseMatrix<double> G((nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1),nx*ny*nz);
   fd_grad(nx, ny, nz, h, G);
 
+  // Solve linear system for g
   Eigen::SparseMatrix<double> A = G.transpose()*G;
   Eigen::MatrixXd b = G.transpose()*v;
-
   Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
   solver.compute(A);
   g = solver.solve(b);
 
+  // Compute weight matrix W for primary grid
   Eigen::SparseMatrix<double> W(n,nx*ny*nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W);
 
-  std::cout << (W*g).sum() << std::endl;
-  
+  // Average results for points in cloud
   double sigma = (W*g).sum()/n;
 
+  // Set up isosurface
   g = g - sigma*Eigen::MatrixXd::Ones(nx*ny*nz,1);
 
   ////////////////////////////////////////////////////////////////////////////
