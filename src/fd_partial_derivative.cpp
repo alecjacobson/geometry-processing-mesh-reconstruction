@@ -11,42 +11,25 @@ void fd_partial_derivative(
 {
 	//O((nx*ny*nz)^2)
 	std::vector<Eigen::Triplet<double>> tripletList;
-	tripletList.reserve(2*nx*ny*nz);
+	tripletList.reserve(D.rows());
 
-	int iEnd = nx;
-	int jEnd = ny;
-	int kEnd = 0;
-	switch (dir) {
-		case 0: iEnd--; break;
-		case 1: jEnd--; break;
-		case 2: kEnd--; break;
-		default: break;
-	}
-
-	for (int i = 0; i < iEnd; ++ i) {
-		for (int j = 0; j < jEnd; ++j) {
-			for (int k = 0; k < kEnd; ++k) {
-				int row = i + j*nx + k*nx*ny;
-				for (int l = 0; l < nx*ny*nz; ++l) {
-					int dirIndex = 0;
-					switch (dir) {
-						case 0:  dirIndex = i; break;
-						case 1:  dirIndex = j; break;
-						case 2:  dirIndex = k; break;
-						default: dirIndex = i; break;
-					}
-
-					if (row >= D.rows()) {
-						std::cout << row << std::endl;
-					}
-					
-					if (l == (dirIndex - 1)) {
-						tripletList.push_back(Eigen::Triplet<double>(row, l, -1/h));
-					}
-					else if(l == dirIndex) {
-						tripletList.push_back(Eigen::Triplet<double>(row, l, 1/h));
-					}
+	for (int i = 0; i < nx; ++i) {
+		for (int j = 0; j < ny; ++j) {
+			for (int k = 0; k < nz; ++k) {
+				int row = row = i + j*nx+ k*nx*ny;
+				int dirIndex = 0;
+				switch (dir) {
+					case 0:  dirIndex = i; break;
+					case 1:  dirIndex = j; break;
+					case 2:  dirIndex = k; break;
+					default: dirIndex = i; break;
 				}
+
+				if (dirIndex > 0) {
+					tripletList.push_back(Eigen::Triplet<double>(row, dirIndex - 1, -1 / h));
+				}
+				tripletList.push_back(Eigen::Triplet<double>(row, dirIndex, 1/h));
+				
 			}
 		}
 	}
