@@ -47,16 +47,17 @@ void poisson_surface_reconstruction(
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
 
+  double h2 = 0.5*h;
   Eigen::SparseMatrix<double> Wx(n,(nx-1)*ny*nz);
-  fd_interpolate(nx-1, ny, nz, h, corner + 0.5*h*Eigen::RowVector3d(1,0,0), P, Wx);
+  fd_interpolate(nx-1, ny, nz, h, corner + h2*Eigen::RowVector3d(1,0,0), P, Wx);
   Eigen::MatrixXd vx = Wx.transpose()*N.col(0);
 
   Eigen::SparseMatrix<double> Wy(n,nx*(ny-1)*nz);
-  fd_interpolate(nx, ny-1, nz, h, corner + 0.5*h*Eigen::RowVector3d(0, 1, 0), P, Wy);
+  fd_interpolate(nx, ny-1, nz, h, corner + h2*Eigen::RowVector3d(0, 1, 0), P, Wy);
   Eigen::MatrixXd vy = Wy.transpose()*N.col(1);
 
   Eigen::SparseMatrix<double> Wz(n, nx*ny*(nz-1));
-  fd_interpolate(nx, ny, nz-1, h, corner + 0.5*h*Eigen::RowVector3d(0, 0, 1), P, Wz);
+  fd_interpolate(nx, ny, nz-1, h, corner + h2*Eigen::RowVector3d(0, 0, 1), P, Wz);
   Eigen::MatrixXd vz = Wz.transpose()*N.col(2);
 
   Eigen::MatrixXd v = Eigen::MatrixXd(vx.rows() + vy.rows() + vz.rows(), 1);
@@ -77,6 +78,8 @@ void poisson_surface_reconstruction(
   Eigen::SparseMatrix<double> W(n,nx*ny*nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W);
 
+  std::cout << (W*g).sum() << std::endl;
+  
   double sigma = (W*g).sum()/n;
 
   g = g - sigma*Eigen::MatrixXd::Ones(nx*ny*nz,1);

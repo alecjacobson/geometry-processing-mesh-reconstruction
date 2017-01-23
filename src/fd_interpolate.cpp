@@ -20,9 +20,9 @@ void fd_interpolate(
 		double y = P(t, 1);
 		double z = P(t, 2);
 
-		int i = floor(x - corner(0) / h);
-		int j = floor(y - corner(1) / h);
-		int k = floor(z - corner(2) / h);
+		int i = floor((x - corner(0)) / h);
+		int j = floor((y - corner(1)) / h);
+		int k = floor((z - corner(2)) / h);
 
 		double x0 = corner(0) + i*h;
 		double x1 = corner(0) + (i+1)*h;

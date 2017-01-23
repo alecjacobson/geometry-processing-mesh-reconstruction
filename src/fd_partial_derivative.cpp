@@ -25,10 +25,8 @@ void fd_partial_derivative(
 					default: dirIndex = i; break;
 				}
 
-				if (dirIndex > 0) {
-					tripletList.push_back(Eigen::Triplet<double>(row, dirIndex - 1, -1 / h));
-				}
-				tripletList.push_back(Eigen::Triplet<double>(row, dirIndex, 1/h));
+				tripletList.push_back(Eigen::Triplet<double>(row, dirIndex, -1/h));
+				tripletList.push_back(Eigen::Triplet<double>(row, dirIndex+1, 1/h));
 				
 			}
 		}
