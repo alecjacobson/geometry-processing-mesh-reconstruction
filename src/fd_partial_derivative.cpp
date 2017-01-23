@@ -12,15 +12,24 @@ void fd_partial_derivative(
 
 	//Do we need to worry about overflow?
 	unsigned int m = nx*ny*nz / ns[dir]; //This is equivalent to (nx-1)*ny*nz when dir=0, etc.
-	D.resize(m, nx*ny*nz);
+	
 
 	std::vector<Eigen::Triplet<double>> entries;
-	entries.reserve(2 * m);
+	entries.reserve(m * 2);
 
-	for (int i = 0; i < m; i++) {
-		entries.emplace_back(i, i + 1, -1);
-		entries.emplace_back(i, i, 1);
+	const int bounds[3]{ nx - (dir == 0), ny - (dir == 1), nz - (dir == 2) };
+
+	for (int x = 0; x < bounds[0]; x++) {
+		for (int y = 0; y < bounds[1]; y++) {
+			for (int z = 0; z < bounds[2]; z++) {
+				const int ls[3]{ x,y,z };
+				auto index = x + y*bounds[0] + z*bounds[0] * bounds[1];
+				entries.emplace_back(index, ls[dir] - 1, -1.0);
+				entries.emplace_back(index, ls[dir], -1.0);
+			}
+		}
 	}
 
+	D.resize(m, nx*ny*nz);
 	D.setFromTriplets(entries.cbegin(), entries.cend());
 }
