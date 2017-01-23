@@ -1,6 +1,8 @@
 #include "fd_interpolate.h"
 
 #include <cmath>
+#include <algorithm>
+
 void fd_interpolate(
 	const int nx,
 	const int ny,
@@ -10,8 +12,10 @@ void fd_interpolate(
 	const Eigen::MatrixXd & P,
 	Eigen::SparseMatrix<double> & W)
 {
-	
+	W.resize(P.rows(), nx*ny*nz);
 	std::vector<Eigen::Triplet<double>> entries;
+	entries.reserve(8 * P.rows());
+
 	for (int i = 0; i < P.rows(); i++) {
 		auto grid_point = (P.row(i) - corner) / h;
 
@@ -39,5 +43,5 @@ void fd_interpolate(
 		}
 	}
 
-	W.setFromTriplets(entries.begin(), entries.end());
+	W.setFromTriplets(entries.cbegin(), entries.cend());
 }
