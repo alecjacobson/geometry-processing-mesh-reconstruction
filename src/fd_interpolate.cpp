@@ -13,6 +13,8 @@ void fd_interpolate(
 {  
   // set size of W
   W.resize(P.rows(), nx*ny*nz);
+  W.reserve(P.rows() * 8);
+  
   double xd, yd, zd, ci, cj, ck;
   int a, b, c, ind;
   
