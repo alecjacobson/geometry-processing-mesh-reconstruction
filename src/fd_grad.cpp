@@ -17,6 +17,9 @@ void fd_grad(
 	entries.reserve(2*rows);
 	int row_offset = 0;
 	for (int i = 0; i < 3; i++) {
+		Eigen::RowVector3d offset = Eigen::RowVector3d::Zero();
+		offset(i) = 1;
+
 		fd_partial_derivative(nx, ny, nz, h, i, D);
 		for (int k = 0; k < D.outerSize(); k++) {
 			for (Eigen::SparseMatrix<double>::InnerIterator it(D, k); it; ++it) {
