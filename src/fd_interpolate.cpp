@@ -11,10 +11,8 @@ void fd_interpolate(
   const Eigen::MatrixXd & P,
   Eigen::SparseMatrix<double> & W)
 {  
-  // set size of W
-  W.resize(P.rows(), nx*ny*nz);
   W.reserve(P.rows() * 8);
-  
+  W.setZero();
   double xd, yd, zd, ci, cj, ck;
   int a, b, c, ind;
   

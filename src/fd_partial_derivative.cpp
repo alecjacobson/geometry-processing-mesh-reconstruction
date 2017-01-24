@@ -9,10 +9,10 @@ void fd_partial_derivative(
   Eigen::SparseMatrix<double> & D)
 {
   int ind, i, j, k;
+  D.reserve(nx * ny * nz * 2);
+  D.setZero();
   
   if (dir == 0) {
-    D.resize( (nx - 1)*ny*nz, nx*ny*nz );
-    D.reserve(nx * ny * nz * 2);
     for (i = 1; i < nx; i++) {
       for (j = 0; j < ny; j++) {
         for (k = 0; k < nz; k++) {
@@ -23,8 +23,6 @@ void fd_partial_derivative(
       }
     }
   } else if (dir == 1) {
-    D.resize( nx*(ny-1)*nz, nx*ny*nz );
-    D.reserve(nx * ny * nz * 2);
     for (i = 0; i < nx; i++) {
       for (j = 1; j < ny; j++) {
         for (k = 0; k < nz; k++) {
@@ -35,7 +33,6 @@ void fd_partial_derivative(
       }
     }
   } else {
-    D.resize( nx*ny*(nz-1), nx*ny*nz );
     D.reserve(nx * ny * nz * 2);
     for (i = 0; i < nx; i++) {
       for (j = 0; j < ny; j++) {
