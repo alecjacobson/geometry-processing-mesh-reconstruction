@@ -37,7 +37,7 @@ void fd_interpolate(
 					entries.emplace_back(
 						i,
 						col,
-						weights[0][x] * weights[1][y] * weights[1][z]);
+						weights[0][x] * weights[1][y] * weights[2][z]);
 				}
 			}
 		}
