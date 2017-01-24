@@ -70,7 +70,7 @@ void poisson_surface_reconstruction(
   v << vx, vy, vz;
   
   // Construct G
-  Eigen::SparseMatrix<double> G((nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1), nx*ny*nz);
+  Eigen::SparseMatrix<double> G(sizeX + sizeY + sizeZ, nx*ny*nz);
   fd_grad(nx, ny, nz, h, G);
   
   // Solve equation

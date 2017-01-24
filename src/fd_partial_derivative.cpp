@@ -33,7 +33,6 @@ void fd_partial_derivative(
       }
     }
   } else {
-    D.reserve(nx * ny * nz * 2);
     for (i = 0; i < nx; i++) {
       for (j = 0; j < ny; j++) {
         for (k = 1; k < nz; k++) {
