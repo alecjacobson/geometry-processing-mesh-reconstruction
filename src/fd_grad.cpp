@@ -13,9 +13,9 @@ void fd_grad(
   int sizeZ = nx*ny*(nz-1);
   
   Eigen::SparseMatrix<double> Dx(sizeX, nx*ny*nz), Dy(sizeY, nx*ny*nz), Dz(sizeZ, nx*ny*nz);
-  fd_partial_derivative(nx-1, ny, nz, h, 0, Dx);
-  fd_partial_derivative(nx, ny-1, nz, h, 1, Dy);
-  fd_partial_derivative(nx, ny, nz-1, h, 2, Dz);
+  fd_partial_derivative(nx, ny, nz, h, 0, Dx);
+  fd_partial_derivative(nx, ny, nz, h, 1, Dy);
+  fd_partial_derivative(nx, ny, nz, h, 2, Dz);
   
   G.reserve(Dx.nonZeros() + Dy.nonZeros() + Dz.nonZeros());
   std::vector<Eigen::Triplet<double> > tripletList;
