@@ -84,8 +84,10 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   Eigen::SparseMatrix<double> W(n, nx*ny*nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W);
-  double sigma = (1/n) * Eigen::RowVectorXd::Ones(n) * W * g;
-  
+  double inverse = 1 / (double)n;
+  double sigma = inverse * Eigen::RowVectorXd::Ones(n) * W * g;
+  std::cout << sigma << std::endl;
+   
   g = g - (sigma * Eigen::VectorXd::Ones(nx*ny*nz));
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
 }
