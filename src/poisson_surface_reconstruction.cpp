@@ -73,16 +73,20 @@ void poisson_surface_reconstruction(
   // Solve linear system for g
   Eigen::SparseMatrix<double> A = G.transpose()*G;
   Eigen::MatrixXd b = G.transpose()*v;
-  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+  //Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
   solver.compute(A);
   g = solver.solve(b);
+
+  std::cout << "#iterations:     " << solver.iterations() << std::endl;
+  std::cout << "estimated error: " << solver.error() << std::endl;
 
   // Compute weight matrix W for primary grid
   Eigen::SparseMatrix<double> W(n,nx*ny*nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W);
 
   // Average results for points in cloud
-  double sigma = (W*g).sum()/n;
+  double sigma = (W*g).sum()/(double)n;
 
   // Set up isosurface
   g = g - sigma*Eigen::MatrixXd::Ones(nx*ny*nz,1);

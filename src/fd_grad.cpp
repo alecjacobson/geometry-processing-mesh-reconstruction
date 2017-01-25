@@ -12,22 +12,26 @@ void fd_grad(
 	Eigen::SparseMatrix<double> Dy(nx*(ny-1)*nz, nx*ny*nz);
 	Eigen::SparseMatrix<double> Dz(nx*ny*(nz-1), nx*ny*nz);
 
-	fd_partial_derivative(nx-1, ny, nz, h, 0, Dx);
-	fd_partial_derivative(nx, ny-1, nz, h, 1, Dy);
-	fd_partial_derivative(nx, ny, nz-1, h, 2, Dz);
+	fd_partial_derivative(nx, ny, nz, h, 0, Dx);
+	fd_partial_derivative(nx, ny, nz, h, 1, Dy);
+	fd_partial_derivative(nx, ny, nz, h, 2, Dz);
 
 	std::vector<Eigen::Triplet<double> > tripletList;
-	tripletList.reserve(G.rows());
-	for (int c = 0; c < G.cols(); ++c) {
+	//tripletList.reserve(G.rows());
+	for (int c = 0; c < Dx.outerSize(); ++c) {
 		 for (Eigen::SparseMatrix<double>::InnerIterator it(Dx, c); it; ++it) {
 			tripletList.push_back(Eigen::Triplet<double>(it.row(), it.col(), it.value()));
 		 }
-		 for (Eigen::SparseMatrix<double>::InnerIterator it(Dy, c); it; ++it) {
-			tripletList.push_back(Eigen::Triplet<double>(it.row(), it.col(), it.value()));
-		 }
-		 for (Eigen::SparseMatrix<double>::InnerIterator it(Dz, c); it; ++it) {
-			tripletList.push_back(Eigen::Triplet<double>(it.row(), it.col(), it.value()));
-		 }
+	}
+	for (int c = 0; c < Dy.outerSize(); ++c) {
+		for (Eigen::SparseMatrix<double>::InnerIterator it(Dy, c); it; ++it) {
+			tripletList.push_back(Eigen::Triplet<double>((nx - 1)*ny*nz + it.row(), it.col(), it.value()));
+		}
+	}
+	for (int c = 0; c < Dz.outerSize(); ++c) {
+		for (Eigen::SparseMatrix<double>::InnerIterator it(Dz, c); it; ++it) {
+			tripletList.push_back(Eigen::Triplet<double>((nx - 1)*ny*nz + nx*(ny - 1)*nz + it.row(), it.col(), it.value()));
+		}
 	}
 	G.setFromTriplets(tripletList.begin(), tripletList.end());
 
