@@ -47,32 +47,32 @@ void fd_interpolate(
 		zdS = convertToStaggered(zd);
 
 		//construct Wx
-		wVal.push_back({ i, (GxS)+nx*((Gy)+ny*(Gz)), (1 - xdS)*(1 - yd)*(1 - zd) });
-		wVal.push_back({ i, (GxS)+nx*((Gy)+ny*(Gz+1)), (1 - xdS)*(1 - yd)*(zd) });
-		wVal.push_back({ i, (GxS)+nx*((Gy+1)+ny*(Gz)), (1 - xdS)*(yd)*(1 - zd) });
-		wVal.push_back({ i, (GxS)+nx*((Gy+1)+ny*(Gz+1)), (1 - xdS)*(yd)*(zd) });
-		wVal.push_back({ i, (GxS+1)+nx*((Gy)+ny*(Gz)), (xdS)*(1 - yd)*(1 - zd) });
-		wVal.push_back({ i, (GxS+1)+nx*((Gy)+ny*(Gz+1)), (xdS)*(1 - yd)*(zd) });
-		wVal.push_back({ i, (GxS+1)+nx*((Gy+1)+ny*(Gz)), (xdS)*(yd)*(1 - zd) });
-		wVal.push_back({ i, (GxS+1)+nx*((Gy+1)+ny*(Gz+1)), (xdS)*(yd)*(zd) });
+		wVal.push_back({ i, (GxS) + (nx - 1)*((Gy) + ny*(Gz)), (1 - xdS)*(1 - yd)*(1 - zd) });
+		wVal.push_back({ i, (GxS) + (nx - 1)*((Gy) + ny*(Gz+1)), (1 - xdS)*(1 - yd)*(zd) });
+		wVal.push_back({ i, (GxS) + (nx - 1)*((Gy+1) + ny*(Gz)), (1 - xdS)*(yd)*(1 - zd) });
+		wVal.push_back({ i, (GxS) + (nx - 1)*((Gy+1) + ny*(Gz+1)), (1 - xdS)*(yd)*(zd) });
+		wVal.push_back({ i, (GxS + 1) + (nx - 1)*((Gy) + ny*(Gz)), (xdS)*(1 - yd)*(1 - zd) });
+		wVal.push_back({ i, (GxS + 1) + (nx - 1)*((Gy) + ny*(Gz+1)), (xdS)*(1 - yd)*(zd) });
+		wVal.push_back({ i, (GxS + 1) + (nx - 1)*((Gy+1) + ny*(Gz)), (xdS)*(yd)*(1 - zd) });
+		wVal.push_back({ i, (GxS + 1) + (nx - 1)*((Gy+1) + ny*(Gz+1)), (xdS)*(yd)*(zd) });
 
 		//construct Wy
-		wVal.push_back({ i, sizeWx + (Gx)+nx*((GyS)+ny*(Gz)), (1 - xd)*(1 - ydS)*(1 - zd) });
-		wVal.push_back({ i, sizeWx + (Gx)+nx*((GyS)+ny*(Gz + 1)), (1 - xd)*(1 - ydS)*(zd) });
-		wVal.push_back({ i, sizeWx + (Gx)+nx*((GyS + 1) + ny*(Gz)), (1 - xd)*(ydS)*(1 - zd) });
-		wVal.push_back({ i, sizeWx + (Gx)+nx*((GyS + 1) + ny*(Gz + 1)), (1 - xd)*(ydS)*(zd) });
-		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS)+ny*(Gz)), (xd)*(1 - ydS)*(1 - zd) });
-		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS)+ny*(Gz + 1)), (xd)*(1 - ydS)*(zd) });
-		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS + 1) + ny*(Gz)), (xd)*(ydS)*(1 - zd) });
-		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS + 1) + ny*(Gz + 1)), (xd)*(ydS)*(zd) });
+		wVal.push_back({ i, sizeWx + (Gx) + nx*((GyS) + (ny-1)*(Gz)), (1 - xd)*(1 - ydS)*(1 - zd) });
+		wVal.push_back({ i, sizeWx + (Gx) + nx*((GyS) + (ny - 1)*(Gz + 1)), (1 - xd)*(1 - ydS)*(zd) });
+		wVal.push_back({ i, sizeWx + (Gx) + nx*((GyS + 1) + (ny - 1)*(Gz)), (1 - xd)*(ydS)*(1 - zd) });
+		wVal.push_back({ i, sizeWx + (Gx) + nx*((GyS + 1) + (ny - 1)*(Gz + 1)), (1 - xd)*(ydS)*(zd) });
+		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS) + (ny - 1)*(Gz)), (xd)*(1 - ydS)*(1 - zd) });
+		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS) + (ny - 1)*(Gz + 1)), (xd)*(1 - ydS)*(zd) });
+		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS + 1) + (ny - 1)*(Gz)), (xd)*(ydS)*(1 - zd) });
+		wVal.push_back({ i, sizeWx + (Gx + 1) + nx*((GyS + 1) + (ny - 1)*(Gz + 1)), (xd)*(ydS)*(zd) });
 
 		//construct Wz
-		wVal.push_back({ i, sizeWx + sizeWy + (Gx)+nx*((Gy)+ny*(GzS)), (1 - xd)*(1 - yd)*(1 - zdS) });
-		wVal.push_back({ i, sizeWx + sizeWy + (Gx)+nx*((Gy)+ny*(GzS + 1)), (1 - xd)*(1 - yd)*(zdS) });
-		wVal.push_back({ i, sizeWx + sizeWy + (Gx)+nx*((Gy + 1) + ny*(GzS)), (1 - xd)*(yd)*(1 - zdS) });
-		wVal.push_back({ i, sizeWx + sizeWy + (Gx)+nx*((Gy + 1) + ny*(GzS + 1)), (1 - xd)*(yd)*(zdS) });
-		wVal.push_back({ i, sizeWx + sizeWy + (Gx + 1) + nx*((Gy)+ny*(GzS)), (xd)*(1 - yd)*(1 - zdS) });
-		wVal.push_back({ i, sizeWx + sizeWy + (Gx + 1) + nx*((Gy)+ny*(GzS + 1)), (xd)*(1 - yd)*(zdS) });
+		wVal.push_back({ i, sizeWx + sizeWy + (Gx) + nx*((Gy) + ny*(GzS)), (1 - xd)*(1 - yd)*(1 - zdS) });
+		wVal.push_back({ i, sizeWx + sizeWy + (Gx) + nx*((Gy) + ny*(GzS + 1)), (1 - xd)*(1 - yd)*(zdS) });
+		wVal.push_back({ i, sizeWx + sizeWy + (Gx) + nx*((Gy + 1) + ny*(GzS)), (1 - xd)*(yd)*(1 - zdS) });
+		wVal.push_back({ i, sizeWx + sizeWy + (Gx) + nx*((Gy + 1) + ny*(GzS + 1)), (1 - xd)*(yd)*(zdS) });
+		wVal.push_back({ i, sizeWx + sizeWy + (Gx + 1) + nx*((Gy) + ny*(GzS)), (xd)*(1 - yd)*(1 - zdS) });
+		wVal.push_back({ i, sizeWx + sizeWy + (Gx + 1) + nx*((Gy) + ny*(GzS + 1)), (xd)*(1 - yd)*(zdS) });
 		wVal.push_back({ i, sizeWx + sizeWy + (Gx + 1) + nx*((Gy + 1) + ny*(GzS)), (xd)*(yd)*(1 - zdS) });
 		wVal.push_back({ i, sizeWx + sizeWy + (Gx + 1) + nx*((Gy + 1) + ny*(GzS + 1)), (xd)*(yd)*(zdS) });
 	}
