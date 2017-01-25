@@ -47,7 +47,7 @@ void poisson_surface_reconstruction(
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
 
-  // Compute vx,vy,vz
+  // Compute vx,vy,vz on staggered grid
   Eigen::SparseMatrix<double> Wx(n,(nx-1)*ny*nz);
   fd_interpolate(nx-1, ny, nz, h, corner + 0.5*h*Eigen::RowVector3d(1,0,0), P, Wx);
   Eigen::MatrixXd vx = Wx.transpose()*N.col(0);
@@ -62,9 +62,9 @@ void poisson_surface_reconstruction(
 
   // Combine vx,vy,vz into v
   Eigen::MatrixXd v = Eigen::MatrixXd(vx.rows() + vy.rows() + vz.rows(), 1);
-  v.block(0, 0, vx.rows(), 1) = vx.col(0);
-  v.block(vx.rows(), 0, vy.rows(), 1) = vy.col(0);
-  v.block(vx.rows() + vy.rows(), 0, vz.rows(), 1) = vz.col(0);
+  v.block(0, 0, vx.rows(), 1) = vx;
+  v.block(vx.rows(), 0, vy.rows(), 1) = vy;
+  v.block(vx.rows() + vy.rows(), 0, vz.rows(), 1) = vz;
 
   // Compute grad matrix G
   Eigen::SparseMatrix<double> G((nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1),nx*ny*nz);
@@ -92,4 +92,5 @@ void poisson_surface_reconstruction(
   // function always extracts g=0, so "pre-shift" your g values by -sigma
   ////////////////////////////////////////////////////////////////////////////
   igl::copyleft::marching_cubes(g, grid, nx, ny, nz, V, F);
+
 }

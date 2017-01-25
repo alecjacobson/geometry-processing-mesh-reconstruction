@@ -65,10 +65,10 @@ void fd_interpolate(
 		tripletList.push_back(Eigen::Triplet<double>(t, i + 1 + j*nx + k*nx*ny, (xd)*(1 - yd)*(1 - zd))); //(x1,y0,z0)
 
 		tripletList.push_back(Eigen::Triplet<double>(t, i + j*nx + (k + 1)*nx*ny, (1 - xd)*(1 - yd)*(zd))); //(x0,y0,z1)
-		tripletList.push_back(Eigen::Triplet<double>(t, i + 1 + j*nx + k*x*ny, (xd)*(1 - yd)*(zd))); //(x1,y0,z1)
+		tripletList.push_back(Eigen::Triplet<double>(t, i + 1 + j*nx + (k+1)*nx*ny, (xd)*(1 - yd)*(zd))); //(x1,y0,z1)
 
 		tripletList.push_back(Eigen::Triplet<double>(t, i + (j + 1)*nx + k*nx*ny, (1 - xd)*(yd)*(1 - zd))); //(x0,y1,z0)
-		tripletList.push_back(Eigen::Triplet<double>(t, i + 1 + (j + 1)*nx + k*x*ny, (xd)*(yd)*(1 - zd))); //(x1,y1,z0)
+		tripletList.push_back(Eigen::Triplet<double>(t, i + 1 + (j + 1)*nx + k*nx*ny, (xd)*(yd)*(1 - zd))); //(x1,y1,z0)
 
 		tripletList.push_back(Eigen::Triplet<double>(t, i + (j + 1)*nx + (k + 1)*nx*ny, (1 - xd)*(yd)*(zd))); //(x0,y1,z1)
 		tripletList.push_back(Eigen::Triplet<double>(t, i + 1 + (j + 1)*nx + (k + 1)*nx*ny, (xd)*(yd)*(zd))); //(x1,y1,z1)

@@ -16,7 +16,7 @@ void fd_partial_derivative(
 	for (int i = 0; i < nx; ++i) {
 		for (int j = 0; j < ny; ++j) {
 			for (int k = 0; k < nz; ++k) {
-				int row = row = i + j*nx+ k*nx*ny;
+				int row = i + j*nx+ k*nx*ny;
 				int dirIndex = 0;
 				switch (dir) {
 					case 0:  dirIndex = i; break;
@@ -25,14 +25,17 @@ void fd_partial_derivative(
 					default: dirIndex = i; break;
 				}
 
-				tripletList.push_back(Eigen::Triplet<double>(row, dirIndex, -1/h));
-				tripletList.push_back(Eigen::Triplet<double>(row, dirIndex+1, 1/h));
+				if (dirIndex > 0) {
+					tripletList.push_back(Eigen::Triplet<double>(row, dirIndex-1, -1/h));	
+				}
+
+				tripletList.push_back(Eigen::Triplet<double>(row, dirIndex, 1/h));
+				
 				
 			}
 		}
 	}
 
 	D.setFromTriplets(tripletList.begin(), tripletList.end());
-	D.makeCompressed();
 	
 }
