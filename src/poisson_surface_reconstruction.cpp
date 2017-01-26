@@ -86,7 +86,6 @@ void poisson_surface_reconstruction(
   fd_interpolate(nx, ny, nz, h, corner, P, W);
   double inverse = 1 / (double)n;
   double sigma = inverse * Eigen::RowVectorXd::Ones(n) * W * g;
-  std::cout << sigma << std::endl;
    
   g = g - (sigma * Eigen::VectorXd::Ones(nx*ny*nz));
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
