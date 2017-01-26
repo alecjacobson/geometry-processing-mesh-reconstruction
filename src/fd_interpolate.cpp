@@ -1,6 +1,4 @@
 #include "fd_interpolate.h"
-#include <math.h>
-#include <iostream>
 
 void fd_interpolate(
   const int nx,

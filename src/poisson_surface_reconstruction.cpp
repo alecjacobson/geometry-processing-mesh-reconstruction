@@ -3,7 +3,6 @@
 #include "fd_grad.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
-#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
