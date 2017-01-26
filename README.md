@@ -8,7 +8,7 @@
 ## Installation, Layout, and Compilation
 
 See
-[introduction](http://github.com/[username]/geometry-processing-introduction).
+[introduction](http://github.com/alecjacobson/geometry-processing-introduction).
 
 ## Execution
 
