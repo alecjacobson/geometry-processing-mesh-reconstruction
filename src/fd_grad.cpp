@@ -26,6 +26,7 @@ void fd_grad(
 	G.makeCompressed();
 	G.reserve(2 * numRow);
 
+	//Iterating over all values and copying. Is there a more efficient way?
 	for (int k = 0; k < Dx.outerSize(); ++k)
 		for (Eigen::SparseMatrix<double>::InnerIterator it(Dx, k); it; ++it)
 			gVal.push_back({it.row(), it.col(), it.value()});

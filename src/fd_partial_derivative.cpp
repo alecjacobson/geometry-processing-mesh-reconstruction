@@ -47,5 +47,4 @@ void fd_partial_derivative(
 			}
 
 	D.setFromTriplets(dVal.begin(), dVal.end());
-	D.makeCompressed();
 }

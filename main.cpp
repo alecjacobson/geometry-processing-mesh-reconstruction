@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     std::vector<std::vector<double> > vD;
     std::string line;
     std::fstream in;
-    in.open(argc>1?argv[1]:"../shared/data/hand.pwn");
+    in.open(argc>1?argv[1]:"../shared/data/sphere.pwn");
     while(in)
     {
       std::getline(in, line);

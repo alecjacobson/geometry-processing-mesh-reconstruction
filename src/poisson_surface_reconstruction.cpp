@@ -54,26 +54,22 @@ void poisson_surface_reconstruction(
   fd_interpolate(nx, ny - 1, nz, h, corner + Eigen::RowVector3d(0, h / 2, 0), P, Wy);
   fd_interpolate(nx, ny, nz - 1, h, corner + Eigen::RowVector3d(0, 0, h / 2), P, Wz);
 
-  Eigen::VectorXd Nvec(N.size());
-  Nvec.block(0, 0, N.rows(), 1) = N.col(0);
-  Nvec.block(N.rows(), 0, N.rows(), 1) = N.col(1);
-  Nvec.block(N.rows() * 2, 0, N.rows(), 1) = N.col(2);
-  
   int numPts = P.rows(), sizeX = Wx.cols(), sizeY = Wy.cols(), sizeZ = Wz.cols();
 
   Eigen::VectorXd vx = Wx.transpose()*N.col(0);
   Eigen::VectorXd vy = Wy.transpose()*N.col(1);
   Eigen::VectorXd vz = Wz.transpose()*N.col(2);
 
-  //std::cout << vx.size() << vy.size() << vz.size();
   Eigen::VectorXd v(sizeX + sizeY + sizeZ, 1);
   v << vx, vy, vz;
 
+  //Both solvers seem to work fine, but ConjugateGradient is faster on Alec's test cases
   //Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
   Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper> solver;
+
   Eigen::SparseMatrix<double> A = G.transpose()*G;
 
-  std::cout << "Comuting preconditioner\n";
+  std::cout << "Computing preconditioner\n";
   solver.compute(A);
   std::cout << "Preconditioner computed\n" << std::flush;
   Eigen::VectorXd b = G.transpose()*v;
@@ -86,7 +82,6 @@ void poisson_surface_reconstruction(
 
   fd_interpolate(nx, ny, nz, h, corner, P, W);
 
-  std::cout<<ones*W*g<<std::endl<<std::flush;
   double sigma = (ones*W*g)(0, 0) / numPts;
   
   g -= sigma*Eigen::VectorXd::Ones(g.size());
