@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <iostream>
+#include "fd_grad.h"
+#include "fd_interpolate.h"
+#include <Eigen/IterativeLinearSolvers>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,6 +51,61 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+
+
+
+  
+  Eigen::SparseMatrix<double> W;
+  Eigen::SparseMatrix<double> Wx,Wy,Wz;
+  fd_interpolate(nx,ny,nz,h,corner,P,W);
+
+  double H = .5 * h;
+  fd_interpolate(nx-1,ny,nz,h,corner+Eigen::RowVector3d(H,0,0),P,Wx);
+  fd_interpolate(nx,ny-1,nz,h,corner+Eigen::RowVector3d(0,H,0),P,Wy);
+  fd_interpolate(nx,ny,nz-1,h,corner+Eigen::RowVector3d(0,0,H),P,Wz);
+
+  
+  Eigen::VectorXd v(Wx.cols() + Wy.cols() + Wz.cols());
+
+
+  auto vx = Wx.transpose() * N.col(0);
+  auto vy = Wy.transpose() * N.col(1);
+  auto vz = Wz.transpose() * N.col(2);
+  v.segment(0,Wx.cols()) = vx;
+  v.segment(Wx.cols(),Wy.cols()) = vy;
+  v.segment(Wx.cols() + Wy.cols(),Wz.cols()) = vz;
+
+
+
+
+  Eigen::SparseMatrix<double> G;
+  fd_grad(nx,ny,nz,h,G);
+  
+
+
+  Eigen::SparseMatrix<double> L = G.transpose() * G;
+  Eigen::VectorXd rhs = G.transpose() * v;
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+  solver.compute(L);
+  g = solver.solve(rhs);
+  std::cout << "Norm of solution: " << g.norm() << std::endl;
+  std::cout << "#iterations:     " << solver.iterations() << std::endl;
+  std::cout << "estimated error: " << solver.error()      << std::endl;
+  if(!solver.info() == Eigen::Success) {
+      std::cout << "Solver failed: ";
+      switch(solver.info()) {
+          case Eigen::NumericalIssue: std::cout << "Numerical issue"; break;
+          case Eigen::NoConvergence: std::cout << "No convergence"; break;
+          case Eigen::InvalidInput: std::cout << "Invalid input"; break;
+      }
+      std::cout << std::endl;
+  }
+  
+  double sigma = (W * g).array().sum() / W.rows();
+
+
+  g.array() -= sigma;
+
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
