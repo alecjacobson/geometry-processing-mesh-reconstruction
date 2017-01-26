@@ -19,6 +19,7 @@ void fd_grad(
   fd_partial_derivative(nx, ny, nz, h, 2, Dz);
   
   G.reserve(Dx.nonZeros() + Dy.nonZeros() + Dz.nonZeros());
+  G.setZero();
   std::vector<Eigen::Triplet<double> > tripletList;
   for (k = 0; k < Dx.outerSize(); ++k) {
     for (Eigen::SparseMatrix<double>::InnerIterator it(Dx, k); it; ++it) {
