@@ -281,7 +281,7 @@ _primary grid_ (blue in the example pictures), we can construct a sparse matrix
 $\D^x ∈ \R^{(n_x-1)n_yn_z × n_xn_yn_z}$ so that each row $\D^x_{i-½,j,k} ∈
 \R^{1 × n_xn_yn_z}$ computes the partial derivative at the corresponding
 staggered grid location $\x_{i-½,j,k}$. The $ℓ$th entry in that row receives a
-value only for neighboring primary grid nodes:
+value only for neighbouring primary grid nodes:
 
 \\[
 \D^x_{i-½,j,k}(ℓ) = 
