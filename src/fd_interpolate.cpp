@@ -1,16 +1,6 @@
 #include "fd_interpolate.h"
 #include <cmath>
 
-inline double convertToStaggered(double x)
-{
-	return (x < 0.5) ? x + 0.5 : x - 0.5;
-}
-
-inline int convertToStaggered(int Gx, double frac)
-{
-	return (frac < 0.5) ? Gx : Gx + 1;
-}
-
 void fd_interpolate(
   const int nx,
   const int ny,
