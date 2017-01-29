@@ -1,4 +1,6 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_interpolate.h"
+
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
 
@@ -47,6 +49,15 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+
+  fprintf(stderr, "Size of Points: %d x %d\n", P.rows(), P.cols());
+  fprintf(stderr, "Grid size: %dx%dx%d with height = %f\n", nx, ny, nz, h);
+  fprintf(stderr, "Corder Point: %f, %f, %f\n", corner(0), corner(1), corner(2));  
+
+
+  Eigen::SparseMatrix<double> W;
+  fd_interpolate(nx,ny, nz, h, corner, P, W);
+
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
