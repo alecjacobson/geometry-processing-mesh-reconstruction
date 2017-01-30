@@ -1,6 +1,11 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <fd_interpolate.h>
+#include <fd_partial_derivative.h>
+#include <fd_grad.h>
+
+using namespace Eigen;
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,10 +52,38 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  SparseMatrix<double> W_x, W_y,W_z;
+  fd_interpolate(nx-1, ny, nz, h, corner + RowVector3d(h/2,0,0), P, W_x);
+  fd_interpolate(nx, ny-1, nz, h, corner + RowVector3d(0, h/2, 0), P, W_y);
+  fd_interpolate(nx, ny, nz-1, h, corner + RowVector3d(0, 0, h/2), P, W_z);
+
+  MatrixXd v_x = W_x.transpose() * N.col(0);
+  MatrixXd v_y = W_y.transpose() * N.col(1);
+  MatrixXd v_z = W_z.transpose() * N.col(2);
+
+  MatrixXd v(v_x.rows() + v_y.rows() + v_z.rows(), v_x.cols());
+  v << v_x, v_y, v_z;
+
+  SparseMatrix<double> G;
+  fd_grad(nx, ny, nz, h, G);
+
+//  SparseMatrix<double> A = ;
+//  MatrixXd b = ;
+
+  ConjugateGradient<Eigen::SparseMatrix<double>, Lower | Upper> solver;
+  solver.compute(G.transpose()*G);
+  g = solver.solve(G.transpose()*v);
+
+  SparseMatrix<double> W(n, nx*ny*nz);
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+
+  double sigma = (W*g).sum() / (double)n;
+  g -= sigma*MatrixXd::Ones(nx*ny*nz, 1);
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
   ////////////////////////////////////////////////////////////////////////////
+  printf("lul");
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
 }
