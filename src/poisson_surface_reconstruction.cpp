@@ -1,8 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include "fd_interpolate.h"
+#include "fd_grad.h"
 
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -11,7 +13,7 @@ void poisson_surface_reconstruction(
     Eigen::MatrixXi & F)
 {
   ////////////////////////////////////////////////////////////////////////////
-  // Construct FD grid, CONGRATULATIONS! You get this for free!
+  // Construct FD grid, CONGRATULATIONS! You get this for free! -> THANKS BRO!
   ////////////////////////////////////////////////////////////////////////////
   // number of input points
   const int n = P.rows();
@@ -54,9 +56,34 @@ void poisson_surface_reconstruction(
   fprintf(stderr, "Grid size: %dx%dx%d with height = %f\n", nx, ny, nz, h);
   fprintf(stderr, "Corder Point: %f, %f, %f\n", corner(0), corner(1), corner(2));  
 
+  //Compute Gradient
+  Eigen::SparseMatrix<double> G;
+  fd_grad(nx, ny, nz, h, G);  
 
-  Eigen::SparseMatrix<double> W;
-  fd_interpolate(nx,ny, nz, h, corner, P, W);
+  //Get interpolation weights for primary and staggered grids (x,y, and z)
+  Eigen::SparseMatrix<double> W, Wx, Wy, Wz;  
+  fd_interpolate(nx, ny, nz, h, corner, P, W);  	
+  fd_interpolate(nx - 1, ny, nz, h, corner + Eigen::RowVector3d(h/2, 0, 0), P, Wx);
+  fd_interpolate(nx, ny - 1, nz, h, corner + Eigen::RowVector3d(0, h/2, 0), P, Wy);
+  fd_interpolate(nx, ny, nz - 1, h, corner + Eigen::RowVector3d(0, 0, h/2), P, Wz);
+  
+  //Distrubute the values of the normal to the staggered grid locations, based off the
+  //trilinear interpolation weights of the points.	
+  Eigen::MatrixXd vx = Wx.transpose() * N.col(0);
+  Eigen::MatrixXd vy = Wy.transpose() * N.col(1);
+  Eigen::MatrixXd vz = Wz.transpose() * N.col(2);
+  Eigen::VectorXd v(Wx.cols() + Wy.cols() + Wz.cols());
+  v << vx, vy, vz;  
+  
+  //Solve the linear system (example from https://eigen.tuxfamily.org/dox/classEigen_1_1ConjugateGradient.html)
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower | Eigen::Upper> cg;
+  g = cg.compute(G.transpose() * G).solve(G.transpose() * v);
+  std::cout << "#iterations:     " << cg.iterations() << std::endl;
+  std::cout << "estimated error: " << cg.error() << std::endl;
+
+  //Interpolate solution g and average at each point
+  double sigma = (W * g).array().sum() / P.rows();  
+  g.array() -= sigma;
 
 
   ////////////////////////////////////////////////////////////////////////////

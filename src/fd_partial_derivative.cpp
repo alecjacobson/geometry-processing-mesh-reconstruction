@@ -18,7 +18,7 @@ void fd_partial_derivative(
 	// TODO: change fd_interpolate to use Triplets
 
 	//Setup the proper dimensions for D, depending on direction
-	int sx, sy, sz;
+	int sx = 0, sy = 0 , sz = 0;
 	if (dir == 0)	   { D.resize((nx - 1)*ny*nz, nx*ny*nz); sx = nx - 1; sy = ny; sz = nz; }
 	else if (dir == 1) { D.resize(nx*(ny-1)*nz, nx*ny*nz); sx = nx; sy = ny - 1; sz = nz;}
 	else if (dir == 2) { D.resize(nx*ny*(nz-1), nx*ny*nz); sx = nx; sy = ny; sz = nz -1;}

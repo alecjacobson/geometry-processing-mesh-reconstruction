@@ -13,6 +13,8 @@
 #include <vector>
 #include <cstdlib>
 
+
+
 int main(int argc, char *argv[])
 {
   // Load in points + normals from .pwn file
@@ -22,7 +24,7 @@ int main(int argc, char *argv[])
     std::vector<std::vector<double> > vD;
     std::string line;
     std::fstream in;
-    in.open(argc>1?argv[1]:"../shared/data/sphere.pwn");
+    in.open(argc>1?argv[1]:"../shared/data/elephant.pwn");
     while(in)
     {
       std::getline(in, line);
