@@ -1,4 +1,8 @@
 #include "poisson_surface_reconstruction.h"
+
+//Testing includes for each function
+#include "fd_interpolate.h"
+
 #include <igl/list_to_matrix.h>
 #include <igl/viewer/Viewer.h>
 #include <Eigen/Core>
@@ -9,6 +13,8 @@
 #include <vector>
 #include <cstdlib>
 
+
+
 int main(int argc, char *argv[])
 {
   // Load in points + normals from .pwn file
@@ -18,7 +24,7 @@ int main(int argc, char *argv[])
     std::vector<std::vector<double> > vD;
     std::string line;
     std::fstream in;
-    in.open(argc>1?argv[1]:"../shared/data/hand.pwn");
+    in.open(argc>1?argv[1]:"../shared/data/elephant.pwn");
     while(in)
     {
       std::getline(in, line);
@@ -33,6 +39,9 @@ int main(int argc, char *argv[])
     P = D.leftCols(3);
     N = D.rightCols(3);
   }
+
+  
+
 
   // Reconstruct mesh
   Eigen::MatrixXd V;
