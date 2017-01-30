@@ -1,6 +1,11 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_interpolate.h"
+#include "fd_partial_derivative.h"
+
+#include <Eigen/SparseCore>
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <iostream> // for debugging
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,7 +52,20 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  std::cout << "Setting up fd_interpolate call for debuging only..." << std::endl;
+  Eigen::SparseMatrix<double> W;
+  fd_interpolate( nx, ny, nz, h, corner, P, W );
 
+  std::cout << "Setting up partial_derivative call for debugging only..." << std::endl;
+  Eigen::SparseMatrix<double> Dx, Dy, Dz;
+  fd_partial_derivative( nx, ny, nz, h, 0, Dx );
+  fd_partial_derivative( nx, ny, nz, h, 1, Dy );
+  fd_partial_derivative( nx, ny, nz, h, 2, Dz );
+
+  
+  
+
+  
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma

@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+namespace {
 double
 myFloor( double a )
 {
@@ -60,6 +61,10 @@ convertLocationToIdx( int x, int y, int z,
 {
     return getIndex( x+i, y+j, z+k, nx, ny, nz );
 }
+
+} // anonymous namespace
+
+
 
 void fd_interpolate(
   const int nx,
