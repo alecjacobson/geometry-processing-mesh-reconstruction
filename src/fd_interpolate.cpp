@@ -34,11 +34,11 @@ getCubeWeights( Eigen::RowVector3d &pGrid )
     {
         for( int j=0; j<3; ++j )
         {
-            C(i,j) = ( i ? (1-w(j)) : w(j) );
+            C(i,j) = ( i ? w(j) : (1-w(j)) );
         }
     }
 
-    std::cout << "Point " << pGrid << " gets w " << w << " and C is " << C << std::endl;
+    //std::cout << "Point " << pGrid << " gets w " << w << " and C is " << C << std::endl;
 
     return C;
 }
@@ -81,7 +81,7 @@ void fd_interpolate(
 
     // construct a sparse matrix W of trilinear interpolation weights so that P = W * x
     // Check the size of P
-    std::cout << "P is of size (rows,cols)" << P.rows() << " x " << P.cols() << std::endl;
+    //std::cout << "P is of size (rows,cols)" << P.rows() << " x " << P.cols() << std::endl;
 
     std::vector< Eigen::Triplet<double> > t;
 
@@ -102,17 +102,20 @@ void fd_interpolate(
         for( int q = 0; q < 3; q++ )
         {
             gridIdx(q) = (int)std::floor( pGrid(q) );
+            //std::cout << "gridIdx("<<q<<")="<<gridIdx(q)<<std::endl;
             // clamp to grid...
             assert( gridIdx(q) < (sz(q)-1) );
-            assert( gridIdx(q) > 0 );
+            assert( gridIdx(q) >= 0 );
             if( gridIdx(q) > (sz(q)-1) )
                 gridIdx(q) = sz(q);
             if( gridIdx(q) < 0 )
                 gridIdx(q) = 0;
         }
-
+        //std::cout << "Point p= "<< p << " gets gridIdx= " << gridIdx << std::endl;
+        //std::cout << "pGrid= "<<pGrid<<std::endl;
 
         Eigen::Matrix<double,2,3> Cw = getCubeWeights( pGrid );
+        //std::cout << "Cw is" << std::endl << Cw << std::endl;
 
         // do all 8 cube points using our Cw
         for( int i=0; i < 2; ++i )
@@ -133,3 +136,4 @@ void fd_interpolate(
     W.setFromTriplets( t.begin(), t.end() );
     //std::cout << "W is: " << std::endl << W << std::endl;
 }
+

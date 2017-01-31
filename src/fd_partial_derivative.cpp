@@ -91,8 +91,3 @@ void fd_partial_derivative(
     D.resize( sgnx*sgny*sgnz, nx*ny*nz ); // thank god it's sparse...
     D.setFromTriplets( t.begin(), t.end() );
 }
-
-
-/*
-0123456780123456780123456780123456780123456780123456780123456780123456789
- */
