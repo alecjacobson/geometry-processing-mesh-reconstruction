@@ -79,15 +79,9 @@ void fd_interpolate(
     // Add your code here
     ////////////////////////////////////////////////////////////////////////////
 
-    // construct a sparse matrix W of trilinear interpolation weights so that P = W * x
-    // Check the size of P
-    //std::cout << "P is of size (rows,cols)" << P.rows() << " x " << P.cols() << std::endl;
-
+    // construct a sparse matrix W of trilinear interpolation weights so that
+    // P = W * x
     std::vector< Eigen::Triplet<double> > t;
-
-    // corner + nx * h
-    // do all the x's first?
-    //Walk over each p in P
 
     Eigen::Vector3i sz = {nx, ny, nz};
     const int nP = P.rows();
@@ -102,7 +96,6 @@ void fd_interpolate(
         for( int q = 0; q < 3; q++ )
         {
             gridIdx(q) = (int)std::floor( pGrid(q) );
-            //std::cout << "gridIdx("<<q<<")="<<gridIdx(q)<<std::endl;
             // clamp to grid...
             assert( gridIdx(q) < (sz(q)-1) );
             assert( gridIdx(q) >= 0 );
@@ -111,11 +104,8 @@ void fd_interpolate(
             if( gridIdx(q) < 0 )
                 gridIdx(q) = 0;
         }
-        //std::cout << "Point p= "<< p << " gets gridIdx= " << gridIdx << std::endl;
-        //std::cout << "pGrid= "<<pGrid<<std::endl;
 
         Eigen::Matrix<double,2,3> Cw = getCubeWeights( pGrid );
-        //std::cout << "Cw is" << std::endl << Cw << std::endl;
 
         // do all 8 cube points using our Cw
         for( int i=0; i < 2; ++i )
@@ -134,6 +124,4 @@ void fd_interpolate(
 
     // Fill in our sparse eigen matrix with the triplets as in the Eigen example...
     W.setFromTriplets( t.begin(), t.end() );
-    //std::cout << "W is: " << std::endl << W << std::endl;
 }
-
