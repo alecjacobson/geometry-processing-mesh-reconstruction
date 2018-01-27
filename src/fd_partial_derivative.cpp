@@ -12,6 +12,7 @@ void fd_partial_derivative(
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
     //Figure out how dir is used
+    
     int dimensions [3];
     
     dimensions[0] = 0;
@@ -20,7 +21,7 @@ void fd_partial_derivative(
     
     dimensions[dir] = 1;
     
-    
+    D.resize((nx-dimensions[0])*(ny-dimensions[1])*(nz-dimensions[2]),nx*ny*nz);
     int pointNo = 0;
     for (int xVal = 0; xVal < nx - dimensions[0] ; xVal ++) {
         for (int yVal = 0; yVal < ny- dimensions[1] ; yVal ++) {
@@ -31,7 +32,7 @@ void fd_partial_derivative(
                 D.insert(pointNo, xVal + nx*(yVal + zVal*ny)) = - 1.0/h;
                 
                 
-                D.insert(pointNo, (xVal + dimensions[0]) + nx*((yVal + dimensions[1]) + (zVal + dimensions[2])*ny) = 1.0/h;
+                D.insert(pointNo, (xVal + dimensions[0]) + nx*((yVal + dimensions[1]) + (zVal + dimensions[2])*ny)) = 1.0/h;
                 
                 
                     

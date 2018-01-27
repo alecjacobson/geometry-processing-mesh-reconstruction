@@ -14,12 +14,13 @@ void fd_interpolate(
   // Add your code here
     //NEED TO FIGURE OUT INDEXING
   ////////////////////////////////////////////////////////////////////////////
-    std::cout << P.cols() << "\n";
-    std::cout << P.rows() << "\n";
+    
+    
     int dims[3];
     dims[0] = nx;
     dims[1] = ny;
     dims[2] = nz;
+    W.resize(P.rows(), nx*ny*nz);
     double P_off[3], P_mod[3];
     for (int pointNo = 0; pointNo < P.rows(); pointNo++) {
         for (int P_ind = 0; P_ind < 3; P_ind ++) {
@@ -50,7 +51,7 @@ void fd_interpolate(
             }
             //i + nx*(j + k * ny)
             W.insert(pointNo, curIndices[0] + nx*(curIndices[1] + curIndices[2]*ny)) = curWeight;
-        
+            
         
             
         }

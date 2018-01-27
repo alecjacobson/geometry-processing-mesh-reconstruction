@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include "fd_interpolate.h"
+#include "fd_grad.h"
+#include "fd_partial_derivative.h"
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,8 +51,57 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
-
-  //Compute W Matrices
+    const int vDim =(nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1);
+    Eigen::MatrixXd smallV;
+    smallV.resize(vDim,1);
+    Eigen::SparseMatrix<double> G;
+    Eigen::MatrixXd OnesMat;
+    OnesMat = Eigen::MatrixXd::Ones(1,P.rows());
+    
+    double sigma = 0;
+    int dims[3];
+    dims[0] = nx;
+    dims[1] = ny;
+    dims[2] = nz;
+    int counter = 0;
+    
+    for (int dir = 0; dir < 3; dir ++) {
+        Eigen::SparseMatrix<double> tempMat;
+        Eigen::MatrixXd tempV;
+        dims[dir] = dims[dir] - 1;
+        
+        fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
+        
+        tempV.resize(dims[0]*dims[1]*dims[2],1);
+        tempV = tempMat.transpose()* N.col(dir);
+        
+        for (int i = 0; i < dims[0]*dims[1]*dims[2]; i ++){
+            
+            smallV(counter + i, 0) = tempV(i,0);
+        
+        }
+        
+        counter = counter + dims[0]*dims[1]*dims[2];
+        dims[dir] = dims[dir] + 1;
+        
+        
+    }
+   
+    
+    fd_grad(nx,ny,nz,h,G);
+    
+    Eigen::BiCGSTAB<Eigen::SparseMatrix<double> > solver;
+    solver.compute(G.transpose()*G);
+    g = solver.solve(smallV);
+    
+    /*fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
+    for (int i = 0; i < P.rows(); i ++){
+    sigma +=  tempMat.row(i) * g;
+    }
+    
+    sigma = sigma / (double) P.rows();
+    g.array() -= sigma;*/
+  //Compute W Matrices here.
     
     
   ////////////////////////////////////////////////////////////////////////////

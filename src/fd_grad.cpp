@@ -8,7 +8,9 @@ void fd_grad(
   const double h,
   Eigen::SparseMatrix<double> & G)
 {
-    Eigen::SparseMatrix<double> tempMat;
+    
+    //Use Reserve
+    G.resize((nx-1)*ny*nz+ nx*(ny-1)*nz+ nx*ny*(nz-1),nx*ny*nz);
     
     int dims[3];
     dims[0] = nx;
@@ -17,6 +19,7 @@ void fd_grad(
     
     int counter = 0, curRow, curCol, curVal;
     for (int dir = 0; dir < 3; dir ++) {
+        Eigen::SparseMatrix<double> tempMat;
         fd_partial_derivative(nx,ny,nz,h,dir, tempMat);
         
         //Temporary solution cite eigen page
