@@ -68,7 +68,7 @@ void poisson_surface_reconstruction(
     for (int dir = 0; dir < 3; dir ++) {
         Eigen::SparseMatrix<double> tempMat;
         Eigen::MatrixXd tempV;
-        dims[dir] = dims[dir] - 1;
+        
         
         fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
         
@@ -89,13 +89,27 @@ void poisson_surface_reconstruction(
             //std::cout << k << "\n";
             
         }*/
+        dims[dir] = dims[dir] - 1;
+        for (int xVal = 0; xVal < dims[0] ; xVal ++) {
+            for (int yVal = 0; yVal < dims[1]; yVal ++) {
+                for (int zVal = 0; zVal <  dims[2] ; zVal ++) {
+                    
+                    int pointNo = xVal + (dims[0])*(yVal + zVal*(dims[1]));
+                    
+                    int pointNo2 = (xVal + nx- dims[0])+ nx*((yVal+ ny - dims[1]) + (zVal+ nz-dims[2])*ny);
+                    smallV(counter + pointNo, 0) = tempV(pointNo2,0);
+                    //std::cout << smallV(counter + pointNo, 0) << "\n";
+                }
+            }
+        }
         
-        
-        for (int i = 0; i < dims[0]*dims[1]*dims[2]; i ++){
+        /*for (int i = 0; i < dims[0]*dims[1]*dims[2]; i ++){
             
             smallV(counter + i, 0) = tempV(i,0);
         
-        }
+        }*/
+        
+        
         
         counter = counter + dims[0]*dims[1]*dims[2];
         dims[dir] = dims[dir] + 1;
@@ -113,16 +127,15 @@ void poisson_surface_reconstruction(
     //Check tempG values
     double curVal,curRow, curCol;
     for (int k=0; k<smallV.rows();k++) {
-        std::cout << smallV(k,0) << "\n";
+       std::cout << smallV(k,0) << "\n";
     
     }
     //Delete above after
     
     solver.compute(tempG);
-    std::cout << tempG.nonZeros() << "hi\n";
-    std::cout << nx << " "<< ny << " "<< nz << " "<< "\n";
+    std::cout << "hi\n";
     g = solver.solve(G.transpose()*smallV);
-    std::cout << "hi2\n";
+
     
     Eigen::SparseMatrix<double> tempMat;
     fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
