@@ -30,6 +30,8 @@ void fd_partial_derivative(
                 //i + nx*(j + k * ny)
                 pointNo = xVal + (nx-dimensions[0])*(yVal + zVal*(ny-dimensions[1]));
                 
+                //pointNo = xVal + (nx)*(yVal + zVal*(ny));
+                
                 D.insert(pointNo, xVal + nx*(yVal + zVal*ny)) = - 1.0/h;
                 
                 

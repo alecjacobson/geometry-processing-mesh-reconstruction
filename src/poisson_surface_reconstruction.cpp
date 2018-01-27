@@ -97,6 +97,9 @@ void poisson_surface_reconstruction(
                     int pointNo = xVal + (dims[0])*(yVal + zVal*(dims[1]));
                     
                     int pointNo2 = (xVal + nx- dims[0])+ nx*((yVal+ ny - dims[1]) + (zVal+ nz-dims[2])*ny);
+
+                    
+                    
                     smallV(counter + pointNo, 0) = tempV(pointNo2,0);
                     //std::cout << smallV(counter + pointNo, 0) << "\n";
                 }

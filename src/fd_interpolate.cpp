@@ -32,7 +32,7 @@ void fd_interpolate(
         for (int P_ind = 0; P_ind < 3; P_ind ++) {
             
             P_mod[P_ind] = floor((double) (P(pointNo,P_ind) - corner(P_ind)) / h);
-            P_off[P_ind] = fmod(P(pointNo,P_ind) - corner(P_ind), h);
+            P_off[P_ind] = fmod(P(pointNo,P_ind) - corner(P_ind), h) / h;
             
         }
         
