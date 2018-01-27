@@ -48,6 +48,9 @@ void poisson_surface_reconstruction(
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
 
+  //Compute W Matrices
+    
+    
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
