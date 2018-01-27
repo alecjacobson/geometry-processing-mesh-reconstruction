@@ -46,14 +46,14 @@ void poisson_surface_reconstruction(
       }
     }
   }
-  Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
+  Eigen::VectorXd g = Eigen::VectorXd::Ones(nx*ny*nz);
 
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
     const int vDim =(nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1);
     Eigen::MatrixXd smallV;
-    smallV.resize(vDim,1);
+    smallV = Eigen::MatrixXd::Ones(vDim,1);
     Eigen::SparseMatrix<double> G;
     Eigen::MatrixXd OnesMat;
     OnesMat = Eigen::MatrixXd::Ones(1,P.rows());
@@ -75,6 +75,22 @@ void poisson_surface_reconstruction(
         tempV.resize(dims[0]*dims[1]*dims[2],1);
         tempV = tempMat.transpose()* N.col(dir);
         
+        /*for (int i = 0; i < N.rows(); i ++){
+            std::cout << N(i,dir) << "\n";
+        }
+        
+        
+        for (int k=0; k<tempMat.outerSize(); ++k){
+            for (Eigen::SparseMatrix<double>::InnerIterator it(tempMat,k); it; ++it)
+            {
+                double curVal = it.value();
+                std::cout << curVal << "\n";
+            }
+            //std::cout << k << "\n";
+            
+        }*/
+        
+        
         for (int i = 0; i < dims[0]*dims[1]*dims[2]; i ++){
             
             smallV(counter + i, 0) = tempV(i,0);
@@ -90,17 +106,38 @@ void poisson_surface_reconstruction(
     
     fd_grad(nx,ny,nz,h,G);
     
-    Eigen::BiCGSTAB<Eigen::SparseMatrix<double> > solver;
-    solver.compute(G.transpose()*G);
-    g = solver.solve(smallV);
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
     
-    /*fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
+    Eigen::SparseMatrix<double> tempG = G.transpose()*G;
+    
+    //Check tempG values
+    double curVal,curRow, curCol;
+    for (int k=0; k<smallV.rows();k++) {
+        std::cout << smallV(k,0) << "\n";
+    
+    }
+    //Delete above after
+    
+    solver.compute(tempG);
+    std::cout << tempG.nonZeros() << "hi\n";
+    std::cout << nx << " "<< ny << " "<< nz << " "<< "\n";
+    g = solver.solve(G.transpose()*smallV);
+    std::cout << "hi2\n";
+    
+    Eigen::SparseMatrix<double> tempMat;
+    fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
+    
+    Eigen::MatrixXd newG = tempMat * g;
     for (int i = 0; i < P.rows(); i ++){
-    sigma +=  tempMat.row(i) * g;
+    sigma +=  newG(i,0);
     }
     
     sigma = sigma / (double) P.rows();
-    g.array() -= sigma;*/
+    g.array() -= sigma;
+    
+    /*for (int i = 0; i < g.rows() ;i ++){
+        std::cout << g(i) << "\n";
+    }*/
   //Compute W Matrices here.
     
     
