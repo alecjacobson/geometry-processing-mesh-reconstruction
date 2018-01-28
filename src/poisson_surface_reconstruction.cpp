@@ -72,7 +72,7 @@ void poisson_surface_reconstruction(
         
         //Shifts the box for the appropriate updated dimensions
         dims[dir] = dims[dir] - 1;
-        corner(dir) = corner(dir) + h;
+        corner(dir) = corner(dir) + 0.5*h;
         fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
         corner(dir) = corner(dir) - h;
 
