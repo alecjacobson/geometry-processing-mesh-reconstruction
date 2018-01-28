@@ -9,7 +9,6 @@ void fd_partial_derivative(
   Eigen::SparseMatrix<double> & D)
 {
   std::vector< Eigen::Triplet<double> > tripletList;
-  std::cout << dir << std::endl;
   int m = D.cols();
   int n = D.rows();
   for(int i = 0; i < nx; i++){
