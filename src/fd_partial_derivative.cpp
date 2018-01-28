@@ -19,19 +19,20 @@ void fd_partial_derivative(
     dimensions[1] = 0;
     dimensions[2] = 0;
     
+    //Figure out the dimension that is being differentiated along
     dimensions[dir] = 1;
     
+    //Definte the shape of D
     D.resize((nx-dimensions[0])*(ny-dimensions[1])*(nz-dimensions[2]),nx*ny*nz);
     int pointNo = 0;
     for (int xVal = 0; xVal < nx - dimensions[0] ; xVal ++) {
         for (int yVal = 0; yVal < ny- dimensions[1] ; yVal ++) {
             for (int zVal = 0; zVal < nz - dimensions[2] ; zVal ++) {
                 
-                //i + nx*(j + k * ny)
+                //Compute the index
                 pointNo = xVal + (nx-dimensions[0])*(yVal + zVal*(ny-dimensions[1]));
                 
-                //pointNo = xVal + (nx)*(yVal + zVal*(ny));
-                
+                //Set the elements
                 D.insert(pointNo, xVal + nx*(yVal + zVal*ny)) = - 1.0/h;
                 
                 

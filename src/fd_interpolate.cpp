@@ -30,33 +30,27 @@ void fd_interpolate(
     double P_off[3], P_mod[3];
     for (int pointNo = 0; pointNo < P.rows(); pointNo++) {
         
-        //std::cout << "Ind: " << pointNo << " h: " << h <<"\n";
+        
         for (int P_ind = 0; P_ind < 3; P_ind ++) {
             
-            
+            //Compute the bottom left cell position for point P
+            //As well as the weights
             P_mod[P_ind] = floor((double) (P(pointNo,P_ind) - corner(P_ind)) / h);
             P_off[P_ind] = fmod(P(pointNo,P_ind) - corner(P_ind), h) /h;
-            /*P_off[P_ind] = P_off[P_ind]/ h; 
-            
-            std::cout << "Point: " << P(pointNo, P_ind) << " Corner: " << corner(P_ind) << "\n";
-            std::cout << P_mod[P_ind] << "\n";
-            std::cout << P_off[P_ind] * h << "\n";
-            
-            std::cout << P_mod[P_ind] * h + P_off[P_ind]*h + corner(P_ind) << "\n"; */
-            
-            //std::cout << P_ind << ": " << corner(P_ind) << "\n";
+
             
         }
         
         //Do the indexing
         int curIndices[3], ind_val, tempVal;
-        //std::cout << "h: " << h <<" X: " << P_off[0] <<" Y: " << P_off[1]<<" Z: " << P_off[2] << "\n";
+        //Indexing through the 8 corners of the cell using the binary numbers from 000 to 111
         for (int curInd = 0; curInd < 8; curInd++) {
             double curWeight = 1.0;
             ind_val = curInd;
             for (int expVal = 2; expVal > -1; expVal --) {
                 tempVal  = floor((double) ind_val / pow(2.0, expVal));
                 curIndices[expVal] = P_mod[expVal] + tempVal ;
+                
                 
                 if (tempVal == 0) {
                    
@@ -68,12 +62,9 @@ void fd_interpolate(
                 
                 }
                 ind_val = ind_val - tempVal * pow(2.0,expVal);
-               // std::cout << ind_val << "\n";
+               
             }
-            //i + nx*(j + k * ny)
-           
-           // std::cout  <<" X: " << curIndices[0] - P_mod[0] <<" Y: " << curIndices[1] - P_mod[1]<<" Z: " << curIndices[2] - P_mod[2] << "\n";
-            //std::cout <<"Weight : " << curWeight << "\n";
+            //Push the triplet into list that will be used to generate the sparse matrix
             tripletList.push_back(T(pointNo, curIndices[0] + nx*(curIndices[1] + curIndices[2]*ny),curWeight));
             
         }

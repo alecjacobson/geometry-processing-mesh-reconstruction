@@ -21,12 +21,16 @@ void fd_grad(
     dims[2] = nz;
     
     int counter = 0, curRow, curCol, curVal;
+    //Iterate through different directions
     for (int dir = 0; dir < 3; dir ++) {
         Eigen::SparseMatrix<double> tempMat;
-        std::cout << "started Grad " << dir << "\n";
+        
         fd_partial_derivative(nx,ny,nz,h,dir, tempMat);
-        std::cout << "Grad " << dir << "\n";
-        //Temporary solution cite eigen page
+
+        //We use triplets here in order to construct the sparse matrix faster
+        
+        //This code is taken almost verbatim from https://eigen.tuxfamily.org/dox/group__TutorialSparse.html
+        //Section: Iterating over non-zero coefficients
         for (int k=0; k<tempMat.outerSize(); ++k){
             for (Eigen::SparseMatrix<double>::InnerIterator it(tempMat,k); it; ++it)
             {
@@ -36,9 +40,8 @@ void fd_grad(
                 
                 tripletList.push_back(T(curRow + counter,curCol,curVal));
                 
-                //std::cout << curRow + counter << "\n";
-            }
-            //std::cout << k << "\n";
+                            }
+            
     
         }
         
@@ -50,6 +53,5 @@ void fd_grad(
         
     }
     G.setFromTriplets(tripletList.begin(), tripletList.end());
-    //std::cout << (nx-1)*ny*nz+ nx*(ny-1)*nz+ nx*ny*(nz-1) << "\n";
-    //std::cout << G.nonZeros() << "\n";
+    
 }
