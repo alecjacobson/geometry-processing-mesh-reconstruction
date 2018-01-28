@@ -1,8 +1,11 @@
 #ifndef POISSON_SURFACE_RECONSTRUCTION_H
 #define POISSON_SURFACE_RECONSTRUCTION_H
 #include <Eigen/Core>
+#include <Eigen/IterativeLinearSolvers>
+#include "fd_grad.h"
+#include "fd_interpolate.h"
 
-// Takes input sample points P and input normals N 
+// Takes input sample points P and input normals N
 // and gives a watertight mesh using a simplified
 // version of [Kazhdan et. al 2006]
 //
