@@ -1,6 +1,7 @@
 #ifndef POISSON_SURFACE_RECONSTRUCTION_H
 #define POISSON_SURFACE_RECONSTRUCTION_H
 #include <Eigen/Core>
+#include <Eigen/Sparse>
 
 // Takes input sample points P and input normals N 
 // and gives a watertight mesh using a simplified
