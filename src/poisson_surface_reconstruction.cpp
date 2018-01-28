@@ -51,13 +51,13 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+    
+    
     const int vDim =(nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1);
     Eigen::MatrixXd smallV;
-    smallV = Eigen::MatrixXd::Ones(vDim,1);
+    smallV.resize(vDim,1);
     Eigen::SparseMatrix<double> G;
-    Eigen::MatrixXd OnesMat;
-    OnesMat = Eigen::MatrixXd::Ones(1,P.rows());
-    
+        
     double sigma = 0;
     int dims[3];
     dims[0] = nx;
@@ -65,53 +65,36 @@ void poisson_surface_reconstruction(
     dims[2] = nz;
     int counter = 0;
     
+    //Compute v_x, v_y, v_z
     for (int dir = 0; dir < 3; dir ++) {
         Eigen::SparseMatrix<double> tempMat;
         Eigen::MatrixXd tempV;
         
-        
+        //Shifts the box for the appropriate updated dimensions
+        dims[dir] = dims[dir] - 1;
+        corner(dir) = corner(dir) + h;
         fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
-        
-        tempV.resize(dims[0]*dims[1]*dims[2],1);
+        corner(dir) = corner(dir) - h;
+
         tempV = tempMat.transpose()* N.col(dir);
         
-        /*for (int i = 0; i < N.rows(); i ++){
-            std::cout << N(i,dir) << "\n";
-        }
+
         
-        
-        for (int k=0; k<tempMat.outerSize(); ++k){
-            for (Eigen::SparseMatrix<double>::InnerIterator it(tempMat,k); it; ++it)
-            {
-                double curVal = it.value();
-                std::cout << curVal << "\n";
-            }
-            //std::cout << k << "\n";
-            
-        }*/
-        dims[dir] = dims[dir] - 1;
         for (int xVal = 0; xVal < dims[0] ; xVal ++) {
             for (int yVal = 0; yVal < dims[1]; yVal ++) {
                 for (int zVal = 0; zVal <  dims[2] ; zVal ++) {
                     
                     int pointNo = xVal + (dims[0])*(yVal + zVal*(dims[1]));
                     
-                    int pointNo2 = (xVal + nx- dims[0])+ nx*((yVal+ ny - dims[1]) + (zVal+ nz-dims[2])*ny);
-
+                    //Computing the values for v
                     
                     
-                    smallV(counter + pointNo, 0) = tempV(pointNo2,0);
-                    //std::cout << smallV(counter + pointNo, 0) << "\n";
+                    
+                    smallV(counter + pointNo, 0) = tempV(pointNo,0);
+                    
                 }
             }
         }
-        
-        /*for (int i = 0; i < dims[0]*dims[1]*dims[2]; i ++){
-            
-            smallV(counter + i, 0) = tempV(i,0);
-        
-        }*/
-        
         
         
         counter = counter + dims[0]*dims[1]*dims[2];
@@ -120,23 +103,18 @@ void poisson_surface_reconstruction(
         
     }
    
-    
+    //Compute the matrix of concatenated partial derivatives
     fd_grad(nx,ny,nz,h,G);
     
+    //Use Conjugate Gradient solver
     Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
     
     Eigen::SparseMatrix<double> tempG = G.transpose()*G;
     
-    //Check tempG values
-    double curVal,curRow, curCol;
-    for (int k=0; k<smallV.rows();k++) {
-       std::cout << smallV(k,0) << "\n";
-    
-    }
-    //Delete above after
     
     solver.compute(tempG);
-    std::cout << "hi\n";
+    
+    //Solves GtGg = G^tv for g;
     g = solver.solve(G.transpose()*smallV);
 
     
@@ -150,12 +128,6 @@ void poisson_surface_reconstruction(
     
     sigma = sigma / (double) P.rows();
     g.array() -= sigma;
-    
-    /*for (int i = 0; i < g.rows() ;i ++){
-        std::cout << g(i) << "\n";
-    }*/
-  //Compute W Matrices here.
-    
     
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
