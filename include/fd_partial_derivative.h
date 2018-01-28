@@ -25,4 +25,5 @@ void fd_partial_derivative(
   const double h,
   const int dir,
   Eigen::SparseMatrix<double> & D);
+  
 #endif
