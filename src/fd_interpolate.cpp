@@ -30,7 +30,8 @@ void fd_interpolate(
 		igl::floor(grid_index, floored_index);
 
 		// the three weights are how much "over" the integer grid values the double values are AKA the decimal part of those numbers
-		Eigen::RowVector3d weights = ((grid_index + corner) - floored_index);
+		Eigen::RowVector3d weights = grid_index - floored_index;
+		floored_index + corner;
 
 		// now we construct all eight
 		int x = floored_index(0);
