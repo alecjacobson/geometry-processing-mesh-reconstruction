@@ -6,7 +6,7 @@ void fd_partial_derivative(
   const int nz,
   const double h,
   const int dir,
-	Eigen::SparseMatrix<double> & D)
+  Eigen::SparseMatrix<double> & D)
 {
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
