@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <Eigen/Sparse>
+#include "fd_grad.h"
+#include "fd_interpolate.h"
+#include <Eigen/SparseCholesky>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,7 +51,24 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  int dx = (nx-1)*ny*nz;
+  int dy = nx*(ny-1)*nz;
+  int dz = nx*ny*(nz-1);
 
+  Eigen::SparseMatrix<double> W(P.rows(), nx*ny*nz);
+  Eigen::SparseMatrix<double> G(dx+dy+dz, nx*ny*nz);
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  fd_grad(nx, ny, nz, h, G);
+  Eigen::VectorXd v;
+  Eigen::MatrixXd temp = W * N;
+  v << temp.col(0), temp.col(1), temp.col(2);
+  // Eigen::Map<Eigen::RowVectorXf> v((W * N).data(), (W * N).size());
+
+  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+  solver.compute(G.transpose() * G);
+  g = solver.solve(G.transpose() * v);
+
+  // g -= W * g;
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
