@@ -11,7 +11,11 @@ void fd_partial_derivative(
   const int dir,
   Eigen::SparseMatrix<double> & D)
 {
+  cout << "expecting non-zeros: " << 2 * D.rows() << endl;
+  int num_rows_D = D.rows();
+
   std::vector<Eigen::Triplet<double>> triplets;
+  triplets.reserve(2 * num_rows_D);
   
   int expected;
   if (dir == 0){
@@ -35,18 +39,16 @@ void fd_partial_derivative(
     off_by_one = nx * ny;
   }  
 
-  for(int i = 0; i < expected - off_by_one; i++){
-    int neighbor = i + off_by_one;
+  for(int i = off_by_one; i < expected + off_by_one; i++){
+    // We are reasoning about the physical point i, but the matrix is missing the first example
 
-    if (i >= off_by_one){
-      // The diagonal is always 1, except when we have no neighbor 
-      triplets.push_back(Eigen::Triplet<double>(i, i, 1));        
-    }
-
-    // Set neighbor ahead
-    triplets.push_back(Eigen::Triplet<double>(neighbor, i, -1));        
+    // Diagonal is always -1
+    triplets.push_back(Eigen::Triplet<double>(i - off_by_one, i - off_by_one, -1));     
+    
+    // In the space we are interested,  
+    triplets.push_back(Eigen::Triplet<double>(i - off_by_one, i, 1));        
   }
 
   D.setFromTriplets(triplets.begin(), triplets.end());
-  cout << D.nonZeros() << endl;
+  cout << "got non-zeros: " << D.nonZeros() << endl;
 }
