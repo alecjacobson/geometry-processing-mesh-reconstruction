@@ -9,18 +9,30 @@ void fd_partial_derivative(
   Eigen::SparseMatrix<double> & D)
 {
   std::vector< Eigen::Triplet<double> > tripletList;
-  int m = D.cols();
-  int n = D.rows();
-  for(int i = 0; i < nx; i++){
-    for(int j = 0; j < ny; j++){
-      for(int k = 0; k < nz; k++){
-        Eigen::RowVector3d coord = Eigen::RowVector3d(i,j,k);
-        if(coord(dir) -1 < m && coord(dir) -1 >= 0){
-          tripletList.push_back(Eigen::Triplet<double>(i + nx*(j + k * ny), coord(dir)-1, -1));
+  int x_lim = nx; int y_lim = ny; int z_lim = nz;
+  if(dir == 0){
+    x_lim -= 1;
+  } else if(dir == 1){
+    y_lim -= 1;
+  } else{
+    z_lim -= 1;
+  }
+
+  for(int i = 0; i < x_lim; i++){
+    for(int j = 0; j < y_lim; j++){
+      for(int k = 0; k < z_lim; k++){
+        int row_idx = i + x_lim*(j + y_lim*k);
+        int col_idx = i + nx*(j + ny*k);
+        tripletList.push_back(Eigen::Triplet<double>(row_idx, col_idx, -1));
+        int next_col_idx;
+        if(dir == 0){
+          next_col_idx = (i+1) + nx*(j + ny*k);
+        }else if(dir == 1){
+          next_col_idx = i + nx*((j+1) + ny*k);
+        }else{
+          next_col_idx = i + nx*(j + ny*(k+1));
         }
-        if(coord(dir) < m  && coord(dir) >= 0){
-          tripletList.push_back(Eigen::Triplet<double>(i + nx*(j + k * ny), coord(dir), 1));
-        }
+        tripletList.push_back(Eigen::Triplet<double>(row_idx, next_col_idx, 1));
       }
     }
   }

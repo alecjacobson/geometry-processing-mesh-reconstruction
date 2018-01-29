@@ -52,9 +52,9 @@ void poisson_surface_reconstruction(
   Eigen::SparseMatrix<double> Wx(n, (nx-1)*ny*nz);
   Eigen::SparseMatrix<double> Wy(n, nx*(ny-1)*nz);
   Eigen::SparseMatrix<double> Wz(n, nx*ny*(nz-1));
-  fd_interpolate((nx-1), ny, nz, h, corner+Eigen::RowVector3d(h,0,0), P, Wx);
-  fd_interpolate(nx, (ny-1), nz, h, corner+Eigen::RowVector3d(0,h,0), P, Wy);
-  fd_interpolate(nx, ny, (nz-1), h, corner+Eigen::RowVector3d(0,0,h), P, Wz);
+  fd_interpolate((nx-1), ny, nz, h, corner+Eigen::RowVector3d(h/2,0,0), P, Wx);
+  fd_interpolate(nx, (ny-1), nz, h, corner+Eigen::RowVector3d(0,h/2,0), P, Wy);
+  fd_interpolate(nx, ny, (nz-1), h, corner+Eigen::RowVector3d(0,0,h/2), P, Wz);
   // Get v components
   Eigen::VectorXd vx = Wx.transpose() * N.col(0);
   Eigen::VectorXd vy = Wy.transpose() * N.col(1);
@@ -74,11 +74,11 @@ void poisson_surface_reconstruction(
   //Determine Sigma
   Eigen::SparseMatrix<double> W(n, nx*ny*nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W);
-  Eigen::VectorXd one = Eigen::VectorXd::Constant(n,1.0);
+  Eigen::VectorXd one = Eigen::VectorXd::Ones(n);
   double sigma = (one.transpose()*W*g);
   sigma *= (1.0/n);
   // pre-shift g values by -sigma
-  g.array() -= sigma;
+  g = g.array() - sigma;
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
