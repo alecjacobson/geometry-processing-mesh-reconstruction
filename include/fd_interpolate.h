@@ -3,7 +3,7 @@
 #include <Eigen/Core>
 #include <Eigen/Sparse>
 #include <vector>
-#include <math.h> 
+#include <math.h>
 // Construct a matrix of trilinear interpolation weights for a
 // finite-difference grid at a given set of points
 //

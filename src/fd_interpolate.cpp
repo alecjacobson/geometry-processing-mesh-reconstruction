@@ -27,8 +27,8 @@ void fd_interpolate(
     //std::cout << "Point: " << point << std::endl;
     Eigen::RowVector3d corner_of_p_cube;
     double x_cube = point(0) - std::fmod(point(0), h);
-    double z_cube = point(1) - std::fmod(point(1), h);
-    double y_cube = point(2) - std::fmod(point(2), h);
+    double y_cube = point(1) - std::fmod(point(1), h);
+    double z_cube = point(2) - std::fmod(point(2), h);
     corner_of_p_cube << x_cube , y_cube, z_cube;
     //std::cout << "Enclosing cube corner: " << corner_of_p_cube << std::endl;
     // get the x-offset, y-offset, z-offset into the cube

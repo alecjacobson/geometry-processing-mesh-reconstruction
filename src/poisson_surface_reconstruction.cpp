@@ -75,8 +75,7 @@ void poisson_surface_reconstruction(
   Eigen::SparseMatrix<double> W(n, nx*ny*nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W);
   Eigen::VectorXd one = Eigen::VectorXd::Ones(n);
-  double sigma = (one.transpose()*W*g);
-  sigma *= (1.0/n);
+  double sigma = double(one.transpose()*W*g)/n;
   // pre-shift g values by -sigma
   g = g.array() - sigma;
 
