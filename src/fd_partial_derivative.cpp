@@ -30,9 +30,10 @@ void fd_partial_derivative(
       for(int k = 0; k < nz - z_diff; k++)
       {
         // Convert subscript to index
-        const auto ind = i + (nx-x_diff)*(j + k * (ny-y_diff));
-        D.insert(ind, ind) = -1/h;
-        D.insert(ind, ind + offset) = 1/h;
+        const auto stagger_idx = i + j * (nx-x_diff) + k * (ny-y_diff) * (nx-x_diff);
+        const auto original_idx = i + j * nx + k * ny * nx;
+        D.insert(stagger_idx, original_idx) = -1/h;
+        D.insert(stagger_idx, original_idx + offset) = 1/h;
       }
     }
   }
