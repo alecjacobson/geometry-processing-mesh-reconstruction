@@ -80,6 +80,14 @@ void poisson_surface_reconstruction(
   std::cout << "#iterations:     " << cg.iterations() << std::endl;
   std::cout << "estimated error: " << cg.error() << std::endl;
 
+  Eigen::SparseMatrix<double> W(n, nx*ny*nz);
+  fd_interpolate(nx,ny,nz, h, corner, P, W);
+  auto one =Eigen::VectorXd::Ones(n)/(double)n; 
+  double sigma = one.transpose()*(W*g);
+  //from https://stackoverflow.com/questions/35688805/eigen-subtracting-a-scalar-from-a-vector
+  g = g.array() - sigma*1.45;//Shrink it a bit more so that the fingers do not stick together.
+  std::cout <<"sigma:"<< sigma << std::endl;
+
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
