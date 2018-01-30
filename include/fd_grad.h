@@ -19,4 +19,10 @@ void fd_grad(
   const int nz,
   const double h,
   Eigen::SparseMatrix<double> & G);
+
+void stack_sparse_matric(
+  Eigen::SparseMatrix<double> &A,
+  Eigen::SparseMatrix<double> &B,
+  Eigen::SparseMatrix<double> &C, 
+  Eigen::SparseMatrix<double> &out);
 #endif

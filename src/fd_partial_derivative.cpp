@@ -13,7 +13,6 @@ void fd_partial_derivative(
   int x_diff = 0, y_diff = 0, z_diff = 0;
   if (dir == 0) {
   	x_diff = 1;
-  	
   }
   else if (dir == 1) {
   	y_diff = 1;
@@ -21,7 +20,9 @@ void fd_partial_derivative(
   else if (dir == 2) {
   	z_diff = 1;
   }
+
   D = Eigen::SparseMatrix<double>((nx-x_diff)*(ny-y_diff)*(nz-z_diff), nx*ny*nz);
+  const auto offset = (x_diff + nx*(y_diff + z_diff * ny));
   for(int i = 0; i < nx - x_diff; i++) 
   {
     for(int j = 0; j < ny - y_diff; j++)
@@ -29,10 +30,9 @@ void fd_partial_derivative(
       for(int k = 0; k < nz - z_diff; k++)
       {
         // Convert subscript to index
-        const auto ind = i + nx*(j + k * ny);
-        const auto ind_next = (x_diff + nx*(y_diff + z_diff * ny));
-        D.insert(ind, ind) = -1;
-        D.insert(ind, ind_next) = 1;
+        const auto ind = i + (nx-x_diff)*(j + k * (ny-y_diff));
+        D.insert(ind, ind) = -1/h;
+        D.insert(ind, ind + offset) = 1/h;
       }
     }
   }

@@ -4,7 +4,7 @@
 #include <Eigen/Sparse>
 #include "fd_grad.h"
 #include "fd_interpolate.h"
-#include <Eigen/SparseCholesky>
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -55,20 +55,51 @@ void poisson_surface_reconstruction(
   int dy = nx*(ny-1)*nz;
   int dz = nx*ny*(nz-1);
 
+  Eigen::SparseMatrix<double> Wx(P.rows(), dx);
+  Eigen::SparseMatrix<double> Wy(P.rows(), dy);
+  Eigen::SparseMatrix<double> Wz(P.rows(), dz);
   Eigen::SparseMatrix<double> W(P.rows(), nx*ny*nz);
   Eigen::SparseMatrix<double> G(dx+dy+dz, nx*ny*nz);
-  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  std::cout << "test1" << std::endl;
   fd_grad(nx, ny, nz, h, G);
-  Eigen::VectorXd v;
-  Eigen::MatrixXd temp = W * N;
-  v << temp.col(0), temp.col(1), temp.col(2);
-  // Eigen::Map<Eigen::RowVectorXf> v((W * N).data(), (W * N).size());
+  std::cout << "test2" << std::endl;
+  fd_interpolate(nx-1, ny, nz, h, corner + Eigen::RowVector3d(h/2, 0, 0), P, Wx);
+  std::cout << "test2.1" << std::endl;
+  fd_interpolate(nx, ny-1, nz, h, corner + Eigen::RowVector3d(0, h/2, 0), P, Wy);
+  std::cout << "test2.2" << std::endl;
+  fd_interpolate(nx, ny, nz-1, h, corner + Eigen::RowVector3d(0, 0, h/2), P, Wz);
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
 
-  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-  solver.compute(G.transpose() * G);
-  g = solver.solve(G.transpose() * v);
+  std::cout << W * x - P << std::endl;
+  std::cout << (W * x - P).norm() << std::endl;
+  std::cout << "test3" << std::endl;
+  Eigen::VectorXd vx, vy, vz;
+  vx = Wx.transpose() * N.col(0);
+  vy = Wy.transpose() * N.col(1);
+  vz = Wz.transpose() * N.col(2);
 
-  // g -= W * g;
+  
+  Eigen::VectorXd v(dx+dy+dz);
+  v << vx, vy, vz;
+
+  // Eigen::Map<Eigen::VectorXd> v(temp.data(), temp.size());
+  // v << temp.col(0), temp.col(1), temp.col(2);
+  std::cout << "test3.5" << std::endl;
+  std::cout << "test4" << std::endl;
+  std::cout << W.rows() << "|" << W.cols() << std::endl;
+  std::cout << g.rows() << std::endl;
+  
+  std::cout << "test5" << std::endl;
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
+  Eigen::SparseMatrix<double> G_square = G.transpose() * G;
+  Eigen::VectorXd Gv = G.transpose() * v;
+  solver.compute(G_square);
+  g = solver.solve(Gv);
+  std::cout << "test6" << std::endl;
+  
+  double sigma = (W * g).sum() / n;
+  g = (g.array() - sigma).matrix();
+
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
