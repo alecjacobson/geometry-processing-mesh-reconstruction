@@ -47,7 +47,6 @@ void poisson_surface_reconstruction(
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
-  //std::cout << "Start" << std::endl;
 
   //Distribute normal 
   Eigen::VectorXd v = Eigen::VectorXd::Zero((nx-1) * ny * nz + nx * (ny-1) * nz + nx * ny * (nz -1));
@@ -67,28 +66,22 @@ void poisson_surface_reconstruction(
   fd_interpolate(nx,ny,nz-1,h,corner + h * 0.5 * Eigen::RowVector3d(0,0,1), P,W_z);
   v_z = W_z.transpose() * N.col(2);
   v << v_x, v_y, v_z;
-  //std::cout << "Finish normal" << std::endl;
   //solve
   Eigen::SparseMatrix<double> G((nx-1) * ny * nz + nx * (ny-1) * nz + nx * ny * (nz -1), 
     nx * ny * nz);
   fd_grad(nx, ny, nz, h, G);
-  //std::cout << "Construct grad" << std::endl;
-  
+
   //Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> cg;
   Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> cg;
   cg.compute(G.transpose() * G);
   Eigen::VectorXd b(nx * ny * nz);
-  //std::cout << "Solving" << std::endl;
   b = G.transpose() * v;
   g = cg.solve(b);
-  //std::cout << "Solve" << std::endl;
   //sigma
   Eigen::SparseMatrix<double> W_sigma(n, nx * ny * nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W_sigma);
   double sigma = 1.00/n * (Eigen::MatrixXd::Ones(1, n) * W_sigma *g).value();
-  //std::cout << "Sigma" << std::endl;
   g = g - sigma * Eigen::MatrixXd::Ones(nx*ny*nz,1);
-  //std::cout << "Sigma" << std::endl;
   ////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
