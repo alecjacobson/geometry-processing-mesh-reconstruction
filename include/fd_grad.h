@@ -1,6 +1,8 @@
 #ifndef FD_GRAD_H
 #define FD_GRAD_H
 #include <Eigen/Sparse>
+#include <igl/cat.h>
+
 // Construct a gradient matrix for a finite-difference grid
 //
 // Inputs:
