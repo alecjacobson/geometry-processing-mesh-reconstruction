@@ -30,7 +30,7 @@ void fd_interpolate(
   for (int i = 0; i < P.rows(); i++){
     double xd = (P(i, 0) - corner(0))/h;
     double yd = (P(i, 1) - corner(1))/h;
-    double zd = (P(i, 1) - corner(2))/h;
+    double zd = (P(i, 2) - corner(2))/h;
 
     double xf = std::floor(xd);
     double yf = std::floor(yd);

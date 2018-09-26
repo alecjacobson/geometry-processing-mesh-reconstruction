@@ -1,17 +1,5 @@
 #include "fd_partial_derivative.h"
 
-class Index
-{
-  public:
-    int nx, ny, nz;
-    Index(int x, int y, int z){
-        nx = x; ny = y; nz = z;
-    };
-    int getIndex(int i, int j, int k){
-      return i + nx*j + nx*ny*k;
-    };
-};
-
 void fd_partial_derivative(
   const int nx,
   const int ny,
@@ -29,8 +17,6 @@ void fd_partial_derivative(
   else if (dir == 1) ny_c--;
   else nz_c--;
 
-  Index indexer(nx_c, ny_c, nz_c);
-
   typedef Eigen::Triplet<double> T;
   std::vector<T> tripletList;
   tripletList.reserve(nx_c * ny_c * nz_c * 2);
@@ -39,20 +25,16 @@ void fd_partial_derivative(
     for (int j = 0; j < ny_c; j++){
       for (int k = 0; k < nz_c; k++){
         // In each row
-        tripletList.push_back(T(indexer.getIndex(i, j, k), indexer.getIndex(i, j, k), -1./h));
-        // tripletList.push_back(T(i + j*nx + k*nx*ny, i + j*nx + k*nx*ny, -1./h));
+        tripletList.push_back(T(i + j*nx_c + k*nx_c*ny_c, i + j*nx + k*nx*ny, -1));
         
         if (dir == 0){
-          tripletList.push_back(T(indexer.getIndex(i, j, k), indexer.getIndex(i+1, j, k), 1./h));
-          // tripletList.push_back(T(i + j*nx + k*nx*ny, (i+1) + j+*nx + k*nx*ny, 1./h));
+          tripletList.push_back(T(i + j*nx_c + k*nx_c*ny_c, (i+1) + j*nx + k*nx*ny, 1));
         }
         else if (dir == 1){
-          tripletList.push_back(T(indexer.getIndex(i, j, k), indexer.getIndex(i, j+1, k), 1./h));
-          // tripletList.push_back(T(i + j*nx + k*nx*ny, i + (j+1)*nx + k*nx*ny, 1./h));
+          tripletList.push_back(T(i + j*nx_c + k*nx_c*ny_c, i + (j+1)*nx + k*nx*ny, 1));
         }
         else{
-          tripletList.push_back(T(indexer.getIndex(i, j, k), indexer.getIndex(i, j, k+1), 1./h));
-          // tripletList.push_back(T(i + j*nx + k*nx*ny, i + j*nx + (k+1)*nx*ny, 1./h));
+          tripletList.push_back(T(i + j*nx_c + k*nx_c*ny_c, i + j*nx + (k+1)*nx*ny, 1));
         }
       }
     }
