@@ -2,6 +2,8 @@
 #define FD_INTERPOLATE_H
 #include <Eigen/Core>
 #include <Eigen/Sparse>
+#include <cmath>
+
 // Construct a matrix of trilinear interpolation weights for a
 // finite-difference grid at a given set of points
 //
