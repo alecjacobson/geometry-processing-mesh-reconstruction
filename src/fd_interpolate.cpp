@@ -1,19 +1,20 @@
 #include "fd_interpolate.h"
+#include <assert.h>
 
 typedef Eigen::Triplet<double> T;
 
-void intervalue(std::vector<T> &coef, int aidx, int bidx, int value) {
-	T tmp;
+void intervalue(std::vector<T> &coef, double aidx, double bidx, double value) {
+
 	for (int i = 0; i < 3; i++) {
-		tmp[0] = aidx * 3 + i;
-		tmp[1] = bidx * 3 + i;
-		tmp[2] = value;
+		T tmp(aidx * 3 + i, bidx * 3 + i, value);
 		coef.push_back(tmp);
 	}
 }
 
-int gidx(double i, double j, double k, int nx, int ny) {
-	return i + nx * (j + k * ny);
+double gidx(double i, double j, double k, int nx, int ny, int nz) {
+	double idx = i + nx * (j + k * ny);
+	assert(idx < (nx - 1) * (ny - 1) * (nz - 1));
+	return idx;
 }
 
 void fd_interpolate(const int nx, const int ny, const int nz, const double h,
@@ -23,17 +24,8 @@ void fd_interpolate(const int nx, const int ny, const int nz, const double h,
 	// Add your code here
 
 	int pnum = P.rows();
-	int nnum = nx * ny * nz;
 
-	Eigen::MatrixXd P2(pnum * 3, 1);
-	for (int i = 0; i < pnum; i++) {
-		for (int j = 0; j < 3; j++) {
-			P2(i * 3 + j, 0) = P(i, j);
-		}
-	}
-
-	// size of w should be pnum * 3 x nnum * 3
-
+	// size of w should be pnum * 3 x (nx-1)(ny-1)(nz-1) * 3
 	std::vector<T> coef;
 	for (int p = 0; p < pnum; p++) {
 		double px = P(p, 0) - corner[0];
@@ -53,36 +45,36 @@ void fd_interpolate(const int nx, const int ny, const int nz, const double h,
 		double zceil = zfloor + 1;
 
 		// left, left, left
-		double idx = gidx(xfloor, yfloor, zfloor, nx, ny);
+		double idx = gidx(xfloor, yfloor, zfloor, nx, ny, nz);
 		double value = (xceil - px) * (yceil - py) * (zceil - pz);
 		intervalue(coef, p, idx, value);
 
-		idx = gidx(xfloor, yceil, zfloor, nx, ny);
+		idx = gidx(xfloor, yceil, zfloor, nx, ny, nz);
 		value = (xceil - px) * (py - yfloor) * (zceil - pz);
 		intervalue(coef, p, idx, value);
 
-		idx = gidx(xceil, yceil, zfloor, nx, ny);
+		idx = gidx(xceil, yceil, zfloor, nx, ny, nz);
 		value = (px - xfloor) * (py - yfloor) * (zceil - pz);
 		intervalue(coef, p, idx, value);
 
-		idx = gidx(xceil, yfloor, zfloor, nx, ny);
+		idx = gidx(xceil, yfloor, zfloor, nx, ny, nz);
 		value = (px - xfloor) * (yceil - py) * (zceil - pz);
 		intervalue(coef, p, idx, value);
 
 		///////////////////////////////////////////////////////
-		idx = gidx(xfloor, yfloor, zceil, nx, ny);
+		idx = gidx(xfloor, yfloor, zceil, nx, ny, nz);
 		value = (xceil - px) * (yceil - px) * (pz - zfloor);
 		intervalue(coef, p, idx, value);
 
-		idx = gidx(xfloor, yceil, zceil, nx, ny);
+		idx = gidx(xfloor, yceil, zceil, nx, ny, nz);
 		value = (xceil - px) * (px - yfloor) * (pz - zfloor);
 		intervalue(coef, p, idx, value);
 
-		idx = gidx(xceil, yceil, zceil, nx, ny);
+		idx = gidx(xceil, yceil, zceil, nx, ny, nz);
 		value = (px - xfloor) * (px - yfloor) * (pz - zfloor);
 		intervalue(coef, p, idx, value);
 
-		idx = gidx(xceil, yfloor, zceil, nx, ny);
+		idx = gidx(xceil, yfloor, zceil, nx, ny, nz);
 		value = (px - xfloor) * (yceil - py) * (pz - zfloor);
 		intervalue(coef, p, idx, value);
 	}
@@ -91,3 +83,4 @@ void fd_interpolate(const int nx, const int ny, const int nz, const double h,
 
 	////////////////////////////////////////////////////////////////////////////
 }
+

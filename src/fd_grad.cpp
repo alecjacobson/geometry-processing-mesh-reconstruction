@@ -2,43 +2,38 @@
 
 typedef Eigen::Triplet<double> T;
 
-void intervalue2(std::vector<T> &coef, int row, int aidx, int bidx, int dir) {
-	T tmp;
-	tmp[0] = row;
-	tmp[1] = bidx * 3 + dir;
-	tmp[2] = 1;
+void intervalue2(std::vector<T> &coef, int row, int aidx, int bidx) {
+	T tmp(row, aidx, -1);
+	T tmp2(row, bidx, 1);
 	coef.push_back(tmp);
-
-	tmp[0] = row;
-	tmp[1] = aidx * 3 + dir;
-	tmp[2] = -1;
-	coef.push_back(tmp);
+	coef.push_back(tmp2);
 }
 
-extern int gidx(double i, double j, double k, int nx, int ny);
+extern int gidx(double i, double j, double k, int nx, int ny, int nz);
 
 void fd_grad(const int nx, const int ny, const int nz, const double h,
 		Eigen::SparseMatrix<double> & G) {
 	////////////////////////////////////////////////////////////////////////////
 	// Add your code here
-	int nnum = nx * ny * nz;
-	G(nnum * 3, nnum * 3);
 
 	// first order
 	std::vector<T> coef;
 	for (int i = 0; i < nx - 1; i++)
 		for (int j = 0; j < ny - 1; j++)
 			for (int k = 0; k < nz - 1; k++) {
-				int st = gidx(i, j, k, nx, ny);
-				int edx = gidx(i + 1, j, k, nx, ny);
-				int edy = gidx(i, j + 1, k, nx, ny);
-				int edz = gidx(i, j, k + 1, nx, ny);
+
+				int st = gidx(i, j, k, nx, ny, nz);
+				int edx = gidx(i + 1, j, k, nx, ny, nz);
+				int edy = gidx(i, j + 1, k, nx, ny, nz);
+				int edz = gidx(i, j, k + 1, nx, ny, nz);
 
 				int row = st * 3;
-				intervalue2(coef, row, st, edx, 0);
-				intervalue2(coef, row, st+1, edy, 1);
-				intervalue2(coef, row, st+2, edz, 2);
+				intervalue2(coef, row, st, edx);
+				intervalue2(coef, row + 1, st, edy);
+				intervalue2(coef, row + 2, st, edz);
 			}
+
 	G.setFromTriplets(coef.begin(), coef.end());
 	////////////////////////////////////////////////////////////////////////////
 }
+

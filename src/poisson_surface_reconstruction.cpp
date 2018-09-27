@@ -52,37 +52,35 @@ void poisson_surface_reconstruction(const Eigen::MatrixXd & P,
 	////////////////////////////////////////////////////////////////////////////
 	// Add your code here
 	////////////////////////////////////////////////////////////////////////////
-	// first, we calculate spaese mtx M, which M_p3_xyz3 * X_xyz3_1 = P_p3_1
-
+	// first, we calculate spaese mtx M, which M_p3_xyz3 * X_(x-1)(y-1)(z-1)3_1 = P_p3_1
 	int pnum = n;
-	int gnum = nx * ny * nz;
+	int gnum = (nx - 1) * (ny - 1) * (nz - 1);
 	Eigen::SparseMatrix<double> W(pnum * 3, gnum * 3);
 	fd_interpolate(nx, ny, nz, h, corner, P, W);
 
-	// next, we calculate sparse mtx G, which G_(x-1)(y-1)(z-1)_xyz * X_xyz_3 = D_(x-1)(y-1)(z-1)_3
-
+	// next, we calculate sparse mtx G, which G_(x-1)(y-1)(z-1)3_xyz * X_xyz_1 = D_(x-1)(y-1)(z-1)_1
 	Eigen::SparseMatrix<double> G((nx - 1) * (ny - 1) * (nz - 1) * 3,
-			nx * ny * nz * 3);
+			nx * ny * nz * 1);
 	fd_grad(nx, ny, nz, h, G);
 
-	// next, we combine G1, G2, G3 with M
+	// next, we combine G with M
 	Eigen::SparseMatrix<double> A = W * G;
 
 	// last, we solve Ax = B
-	BiCGSTAB<SparseMatrix<double> > solver;
+	Eigen::BiCGSTAB<Eigen::SparseMatrix<double> > solver;
 	solver.compute(A);
-	if(solver.info()!=Success) {
-	  // decomposition failed
-	  return;
+
+	Eigen::VectorXd b(n * 3);
+	for (int i = 0; i < pnum; i++) {
+		for (int j = 0; j < 3; j++) {
+			b(i * 3 + j, 0) = N(i, j);
+		}
 	}
 	g = solver.solve(b);
-	if(solver.info()!=Success) {
-	  // solving failed
-	  return;
-	}
 
 	double sigma = (W * g).mean();
-	g = g - sigma;
+	for (int i = 0; i < g.cols(); i++)
+		g(i) = g(i) - sigma;
 
 	////////////////////////////////////////////////////////////////////////////
 	// Run black box algorithm to compute mesh from implicit function: this
