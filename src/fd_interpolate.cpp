@@ -17,24 +17,31 @@ void fd_interpolate(
     return x + nx * (y + z * ny);
   };
 
+  std::vector<Eigen::Triplet<double>> tripletList;
+
   // Loop through rows of P (loop through points)
   for (int i = 0; i < P.rows(); i++) {
     // Find the nearest points
-    int x0 = (int) ((P(i, 0) - corner[0]) / h);
-    int y0 = (int) ((P(i, 1) - corner[1]) / h);
-    int z0 = (int) ((P(i, 2) - corner[2]) / h);
+    int x = (int) ((P(i, 0) - corner[0]) / h);
+    int y = (int) ((P(i, 1) - corner[1]) / h);
+    int z = (int) ((P(i, 2) - corner[2]) / h);
 
     // Find percent
-    double px = std::fmod((P(i, 0) - corner[0]), h);
-    double py = std::fmod((P(i, 1) - corner[1]), h);
-    double pz = std::fmod((P(i, 2) - corner[2]), h);
+    double px = (P(i, 0) - corner[0]) / h - x;
+    double py = (P(i, 1) - corner[1]) / h - y;
+    double pz = (P(i, 2) - corner[2]) / h - z;
 
-    W.insert(i, ind(x0, y0, z0)) = 1 - (px / h) - (py / h) - (pz / h);
-    W.insert(i, ind(x0 + 1, y0, z0)) = px / h;
-    W.insert(i, ind(x0, y0 + 1, z0)) = py / h;
-    W.insert(i, ind(x0, y0, z0 + 1)) = pz / h;
-
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x, y, z), (1 - px) * (1 - py) * (1 - pz)));
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x + 1, y, z), px * (1 - py) * (1 - pz)));
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x, y + 1, z), (1 - px) * py * (1 - pz)));
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x, y, z + 1), (1 - px) * (1 - py) * pz));
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x + 1, y + 1, z), px * py * (1 - pz)));
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x + 1, y, z + 1), px * (1 - py) * pz));
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x, y + 1, z + 1), (1 - px) * py * pz));
+    tripletList.push_back(Eigen::Triplet<double> (i, ind(x + 1, y + 1, z + 1), px * py * pz));
   }
+
+  W.setFromTriplets(tripletList.begin(), tripletList.end());
 
   ////////////////////////////////////////////////////////////////////////////
 }

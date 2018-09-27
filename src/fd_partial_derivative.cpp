@@ -11,32 +11,49 @@ void fd_partial_derivative(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
 
-  auto ind = [&](int x, int y, int z) {
-    return x + nx * (y + z * ny);
-  };
+  int nxm = nx;
+  int nym = ny;
+  int nzm = nz;
 
-  // Calculate m
   int m;
   switch (dir) {
     case 0:
-      m = (nx - 1) * ny * nz;
+      nxm = nx - 1;
       break;
     case 1:
-      m = nx * (ny - 1) * nz;
-      break;
-    case 2:
-      m = nx * ny * (nz - 1);
+      nym = ny - 1;
       break;
     default:
-      m = nx * ny * (nz - 1);
+      nzm = nz - 1;
   }
+  m = nxm * nym * nzm;
+
+  auto ind = [&](int x, int y, int z) {
+      return x + nx * (y + z * ny);
+  };
+  auto mind = [&](int x, int y, int z) {
+      return x + nxm * (y + z * nym);
+  };
 
   D.resize(m, nx * ny * nz);
 
   // Calculate D
-  for (int i = 0; i < m; i++) {
-    D.insert(i, i) = 1 / h;
-    D.insert(i, i + 1) = -1 / h;
+  for (int i = 0; i < nxm; i++) {
+    for (int j = 0; j < nym; j++) {
+      for (int k = 0; k < nzm; k++) {
+        D.insert(mind(i, j, k), ind(i, j, k)) = - 1 / h;
+        switch(dir) {
+          case 0:
+            D.insert(mind(i, j, k), ind(i + 1, j, k)) = 1 / h;
+            break;
+          case 1:
+            D.insert(mind(i, j, k), ind(i, j + 1, k)) = 1 / h;
+            break;
+          default:
+            D.insert(mind(i, j, k), ind(i, j, k + 1)) = 1 / h;
+        }
+      }
+    }
   }
 
   ////////////////////////////////////////////////////////////////////////////

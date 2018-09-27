@@ -10,24 +10,31 @@ void fd_grad(
   Eigen::SparseMatrix<double> &G) {
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
-  Eigen::SparseMatrix<double> xmat, ymat, zmat;
+  Eigen::SparseMatrix<double> dx, dy, dz;
 
-  fd_partial_derivative(nx, ny, nz, h, 0, xmat);
-  fd_partial_derivative(nx, ny, nz, h, 1, ymat);
-  fd_partial_derivative(nx, ny, nz, h, 2, zmat);
+  fd_partial_derivative(nx, ny, nz, h, 0, dx);
+  fd_partial_derivative(nx, ny, nz, h, 1, dy);
+  fd_partial_derivative(nx, ny, nz, h, 2, dz);
 
-  G.resize(xmat.rows() + ymat.rows() + zmat.rows(), xmat.cols());
+  G.resize(dx.rows() + dy.rows() + dz.rows(), dx.cols());
+  G.setZero();
 
-  G.reserve(xmat.nonZeros() + ymat.nonZeros() + zmat.nonZeros());
-  for (int c = 0; c < xmat.cols(); ++c) {
-    G.startVec(c);
-    for (Eigen::SparseMatrix<double>::InnerIterator itX(xmat, c); itX; ++itX)
-      G.insertBack(itX.row(), c) = itX.value();
-    for (Eigen::SparseMatrix<double>::InnerIterator itY(xmat, c); itY; ++itY)
-      G.insertBack(itY.row() + xmat.rows(), c) = itY.value();
-    for (Eigen::SparseMatrix<double>::InnerIterator itZ(xmat, c); itZ; ++itZ)
-      G.insertBack(itZ.row() + xmat.rows() + ymat.rows(), c) = itZ.value();
+  std::vector<Eigen::Triplet<double>> tripletList;
+  for (int k = 0; k < dx.outerSize(); ++k) {
+    for (Eigen::SparseMatrix<double>::InnerIterator it(dx, k); it; ++it) {
+      tripletList.push_back(Eigen::Triplet<double>(it.row(), it.col(), it.value()));
+    }
   }
-  G.finalize();
+  for (int k = 0; k < dy.outerSize(); ++k) {
+    for (Eigen::SparseMatrix<double>::InnerIterator it(dy, k); it; ++it) {
+      tripletList.push_back(Eigen::Triplet<double>(it.row() + dx.rows(), it.col(), it.value()));
+    }
+  }
+  for (int k = 0; k < dz.outerSize(); ++k) {
+    for (Eigen::SparseMatrix<double>::InnerIterator it(dz, k); it; ++it) {
+      tripletList.push_back(Eigen::Triplet<double>(it.row() + dx.rows() + dy.rows(), it.col(), it.value()));
+    }
+  }
+  G.setFromTriplets(tripletList.begin(), tripletList.end());
   ////////////////////////////////////////////////////////////////////////////
 }

@@ -50,21 +50,38 @@ void poisson_surface_reconstruction(
 
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
-  Eigen::SparseMatrix<double> W, G;
+  Eigen::SparseMatrix<double> W, Wx, Wy, Wz, G;
   fd_interpolate(nx, ny, nz, h, corner, P, W);
   fd_grad(nx, ny, nz, h, G);
 
-  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
-  solver.compute(G.transpose() * G);
+  fd_interpolate(nx - 1, ny, nz, h, corner + Eigen::RowVector3d(h * 0.5, 0, 0), P, Wx);
+  fd_interpolate(nx, ny - 1, nz, h, corner + Eigen::RowVector3d(0, h * 0.5, 0), P, Wy);
+  fd_interpolate(nx, ny, nz - 1, h, corner + Eigen::RowVector3d(0, 0, h * 0.5), P, Wz);
+
+  Eigen::VectorXd vector, vx, vy, vz;
+  vx = Wx.transpose() * N.col(0);
+  vy = Wy.transpose() * N.col(1);
+  vz = Wz.transpose() * N.col(2);
+
+  vector.resize((nx - 1) * ny * nz + nx * (ny - 1) * nz + nx * ny * (nz - 1));
+  vector << vx, vy, vz;
+
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+  Eigen::SparseMatrix<double> A = G.transpose() * G;
+  Eigen::VectorXd b = G.transpose() * vector;
+  solver.compute(A);
   if(solver.info()!=Eigen::Success) {
     std::cout << "Decomposition failed" << std::endl;
     return;
   }
-  g = solver.solve(G.transpose() * N);
+  g = solver.solve(b);
   if(solver.info()!=Eigen::Success) {
     std::cout << "Solver failed" << std::endl;
     return;
   }
+
+  double sigma = (1.0 / n) * Eigen::RowVectorXd::Ones(n) * W * g;
+  g -= sigma * Eigen::VectorXd::Ones(nx*ny*nz);
 
   ////////////////////////////////////////////////////////////////////////////
 
