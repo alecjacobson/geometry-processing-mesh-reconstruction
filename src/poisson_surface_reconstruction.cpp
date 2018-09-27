@@ -66,7 +66,8 @@ void poisson_surface_reconstruction(
   vector.resize((nx - 1) * ny * nz + nx * (ny - 1) * nz + nx * ny * (nz - 1));
   vector << vx, vy, vz;
 
-  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+  // BiCGSTAB solver always fail for me so use ConjugateGradient
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
   Eigen::SparseMatrix<double> A = G.transpose() * G;
   Eigen::VectorXd b = G.transpose() * vector;
   solver.compute(A);
