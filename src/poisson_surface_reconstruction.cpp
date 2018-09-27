@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include "fd_grad.h"
+#include "fd_interpolate.h"
+#include <Eigen/SparseCholesky>
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -46,6 +50,22 @@ void poisson_surface_reconstruction(
 
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
+  Eigen::SparseMatrix<double> W, G;
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  fd_grad(nx, ny, nz, h, G);
+
+  Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> solver;
+  solver.compute(G.transpose() * G);
+  if(solver.info()!=Eigen::Success) {
+    std::cout << "Decomposition failed" << std::endl;
+    return;
+  }
+  g = solver.solve(G.transpose() * N);
+  if(solver.info()!=Eigen::Success) {
+    std::cout << "Solver failed" << std::endl;
+    return;
+  }
+
   ////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
