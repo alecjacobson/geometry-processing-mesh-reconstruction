@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <iostream>
+#include "fd_interpolate.h"
+#include "fd_partial_derivative.h"
+#include "fd_grad.h"
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -45,12 +49,42 @@ void poisson_surface_reconstruction(
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
 
   ////////////////////////////////////////////////////////////////////////////
-  // Add your code here
+  // distribute the given normals N 
+  Eigen::SparseMatrix<double> Wx, Wy, Wz;
+
+  // Moving P to the left by h/2 is the same as moving corner to the right by h/2
+  fd_interpolate((nx - 1), ny, nz, h, corner + Eigen::RowVector3d(-h/2, 0, 0), P, Wx);
+  fd_interpolate(nx, (ny - 1), nz, h, corner + Eigen::RowVector3d(0, -h/2, 0), P, Wy);
+  fd_interpolate(nx, ny, (nz - 1), h, corner + Eigen::RowVector3d(0, 0, -h/2), P, Wz);
+
+  Eigen::VectorXd Vx(Wx.cols());
+  Vx << Wx.transpose() * N.col(0);
+  Eigen::VectorXd Vy(Wy.cols());
+  Vy << Wy.transpose() * N.col(1);
+  Eigen::VectorXd Vz(Wz.cols());
+  Vz << Wz.transpose() * N.col(2);
+  Eigen::VectorXd my_vec(Vx.size() + Vy.size() + Vz.size());
+  my_vec << Vx, Vy, Vz;
+
+  std::cout << my_vec.rows() << " " << my_vec.cols() << "\n";
+
+  // Compute Gradient:
+  Eigen::SparseMatrix<double> G;
+  fd_grad(nx, ny, nz, h, G);
+
+  std::cout << G.rows() << " " << G.cols() << "\n";
+
+  // Compute g: G.T G g = G.T v
+  // Idea inspired by BiCGSTAB library
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper> cg;
+  cg.compute(G.transpose() * G);
+  g = cg.solve(G.transpose() * my_vec);
+
   ////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
   ////////////////////////////////////////////////////////////////////////////
-  igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
+  // igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
 }
