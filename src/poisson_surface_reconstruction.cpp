@@ -66,13 +66,11 @@ void poisson_surface_reconstruction(
   Eigen::VectorXd my_vec(Vx.size() + Vy.size() + Vz.size());
   my_vec << Vx, Vy, Vz;
 
-  std::cout << my_vec.rows() << " " << my_vec.cols() << "\n";
 
   // Compute Gradient:
   Eigen::SparseMatrix<double> G;
   fd_grad(nx, ny, nz, h, G);
 
-  std::cout << G.rows() << " " << G.cols() << "\n";
 
   // Compute g: G.T G g = G.T v
   // Idea inspired by BiCGSTAB library
@@ -83,8 +81,14 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
-  // Run black box algorithm to compute mesh from implicit function: this
-  // function always extracts g=0, so "pre-shift" your g values by -sigma
+  // Find W on the primary (non-staggered) grid:
+  Eigen::SparseMatrix<double> W;
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+
+  // Compute sigma:
+  double sigma = (W * g).sum() / W.rows();
+  g = g - Eigen::VectorXd::Ones(g.size()) * sigma;
+
   ////////////////////////////////////////////////////////////////////////////
-  // igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
+  igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
 }
