@@ -3,7 +3,6 @@
 #include "fd_grad.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
-#include <iostream>
 #include <Eigen/Sparse>
 #include <Eigen/IterativeLinearSolvers>	
 
@@ -53,53 +52,42 @@ void poisson_surface_reconstruction(
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
 
-  // Initialize interpolation matrix and distribute normals on regular grid
+  // Initialize interpolation matrices
   int s = (nx - 1) * ny * nz + nx * (ny-1) * nz + nx * ny * (nz - 1);
   Eigen::SparseMatrix<double> Wx(n, (nx - 1) * ny * nz);
   Eigen::SparseMatrix<double> Wy(n, (ny - 1) * nx * nz);
   Eigen::SparseMatrix<double> Wz(n, (nz - 1) * nx * ny);
-  std::cout << "Matrix Created" << std::endl;
   fd_interpolate(nx - 1, ny, nz, h, corner + Eigen::RowVector3d(h/2, 0, 0), P, Wx);
-  std::cout << "Done Wx" << std::endl;
   fd_interpolate(nx, ny - 1, nz, h, corner + Eigen::RowVector3d(0, h/2, 0), P, Wy);
-  std::cout << "Done Wy" << std::endl;
   fd_interpolate(nx, ny, nz - 1, h, corner + Eigen::RowVector3d(0, 0, h/2), P, Wz);
-  std::cout << "Done Wz" << std::endl;
+
+  // Distribute normals on the grid
   Eigen::VectorXd v(s);
-  std::cout << "Done Intializing vector v" << std::endl;
   Eigen::VectorXd v_x = Wx.transpose() * N.col(0);
   Eigen::VectorXd v_y = Wy.transpose() * N.col(1);
   Eigen::VectorXd v_z = Wz.transpose() * N.col(2);
   v << v_x,  v_y, v_z;
-  std::cout << "Done Distributing normals on Staggered Grids" << v.size() << std::endl;
+
 
   // Initialize the gradient matrix 
   Eigen::SparseMatrix<double> G(s, nx * ny * nz);
   fd_grad(nx,ny,nz,h,G);
-  std::cout << "Done Initializing Gradient" << std::endl;
 
-  // Compute least squares minimizer for ||G g - v||^2
+  // Compute least squares minimizer for ||G g - v||^2 using conjugate gradient method
   Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper> solver;
   solver.compute(G.transpose() * G);
-  std::cout << "Done computing G^T G" << std::endl;
   Eigen::VectorXd rhs = G.transpose() * v; 
-  std::cout << "Done computing G^T v" << std::endl;
   g = solver.solve(rhs); 
-  std::cout << "Done Solving for G" << std::endl;
-  std::cout << "#iterations:     " << solver.iterations() << std::endl;
-  std::cout << "estimated error: " << solver.error()      << std::endl; 
 
-  // Determine an iso-level sigma
+  // Determine an iso-level sigma using the interpolation matrix on the regular grid
   Eigen::SparseMatrix<double> W_dir(n, nx * ny * nz); 
   fd_interpolate(nx, ny, nz, h, corner, P, W_dir);
-  std::cout << "Done making an interpolation matrix on the direct grid" << std::endl;
   double sigma = (W_dir * g).sum() / n; 
   g = g - sigma * Eigen::VectorXd::Ones(nx * ny * nz);
-  std::cout << "Done calculating sigma, it is " << sigma << std::endl;
+
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
   ////////////////////////////////////////////////////////////////////////////
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
-  std::cout << "Done marching cubes" << std::endl;
 }

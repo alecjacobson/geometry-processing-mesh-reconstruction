@@ -1,5 +1,5 @@
 #include "fd_partial_derivative.h"
-#include <iostream>
+
 void fd_partial_derivative(
   const int nx,
   const int ny,
