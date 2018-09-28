@@ -1,5 +1,4 @@
 #include "poisson_surface_reconstruction.h"
-#include "fd_partial_derivative.h"
 #include "fd_grad.h"
 #include "fd_interpolate.h"
 #include <igl/copyleft/marching_cubes.h>
@@ -7,8 +6,6 @@
 
 #include <Eigen/IterativeLinearSolvers>
 #include <iostream>
-
-using std::cout;
 
 template <typename T>
 void print_sparse(const Eigen::SparseMatrix<T>& matrix) {
@@ -18,7 +15,6 @@ void print_sparse(const Eigen::SparseMatrix<T>& matrix) {
         }
     }
 }
-
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -35,7 +31,7 @@ void poisson_surface_reconstruction(
     int nx, ny, nz;
     // Maximum extent (side length of bounding box) of points
     double max_extent =
-    (P.colwise().maxCoeff()-P.colwise().minCoeff()).maxCoeff();
+        (P.colwise().maxCoeff()-P.colwise().minCoeff()).maxCoeff();
     // padding: number of cells beyond bounding box of input points
     const double pad = 8;
     // choose grid spacing (h) so that shortest side gets 30+2*pad samples
@@ -46,14 +42,6 @@ void poisson_surface_reconstruction(
     nx = std::max((P.col(0).maxCoeff()-P.col(0).minCoeff()+(2.*pad)*h)/h,3.);
     ny = std::max((P.col(1).maxCoeff()-P.col(1).minCoeff()+(2.*pad)*h)/h,3.);
     nz = std::max((P.col(2).maxCoeff()-P.col(2).minCoeff()+(2.*pad)*h)/h,3.);
-    cout << "max_extent: " << max_extent << '\n';
-    // h is set such that we have 30+2*pad cell in each direction of the grid 
-    cout << "h: " << h << '\n';
-    // corner represents the coordinate of (0,0,0) of the grid,
-    // relative to the set of input points in space
-    cout << "corner: " << corner << '\n';
-    // dimension of grid maybe different, 
-    cout << "nx,ny,nz: " << nx << "," << ny << "," << nz << '\n';
 
     // Compute positions of grid nodes
     Eigen::MatrixXd x(nx*ny*nz, 3);
@@ -70,7 +58,6 @@ void poisson_surface_reconstruction(
         }
     }
     Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
-
 
     // Distribute normal N to staggered grid values using trilinear weights Wx, Wy, Wz
     // such that we have `v` representing partial derivatives at staggered grid nodes
@@ -105,7 +92,6 @@ void poisson_surface_reconstruction(
     solver.compute(G.transpose() * G);
     g = solver.solve(G.transpose() * v);
 
-    std::cout << "solved! #iter: " << solver.iterations() << " std-error: " << solver.error() << '\n';
 
     // Compute iso-value
     Eigen::SparseMatrix<double> W(n, nx*ny*nz);

@@ -1,10 +1,6 @@
 #include "fd_grad.h"
 #include "fd_partial_derivative.h"
 
-#include <iostream>
-using std::cout;
-
-
 void fd_grad(
   const int nx,
   const int ny,
@@ -12,7 +8,6 @@ void fd_grad(
   const double h,
   Eigen::SparseMatrix<double> & G)
 {
-
     Eigen::SparseMatrix<double> Dx((nx-1)*ny*nz, nx*ny*nz);
     Eigen::SparseMatrix<double> Dy(nx*(ny-1)*nz, nx*ny*nz);
     Eigen::SparseMatrix<double> Dz(nx*ny*(nz-1), nx*ny*nz);

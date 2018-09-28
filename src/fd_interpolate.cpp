@@ -3,10 +3,6 @@
 #include <cmath>
 #include <vector>
 
-#include <iostream>
-using std::cout;
-
-
 void fd_interpolate(
   const int nx,
   const int ny,
