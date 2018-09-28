@@ -30,13 +30,13 @@ void fd_partial_derivative(
       for(int k = 0; k < z; k++)
       {
         ind = i + x * (j + k * y);
-        triplets.push_back(Eigen::Triplet<double>(ind, i + nx * (j + k * ny), 1));
+        triplets.push_back(Eigen::Triplet<double>(ind, i + nx * (j + k * ny), -1));
         if (dir == 0) {
-          triplets.push_back(Eigen::Triplet<double>(ind, (i + 1) + nx * (j + k * ny), -1));
+          triplets.push_back(Eigen::Triplet<double>(ind, (i + 1) + nx * (j + k * ny), 1));
         } else if (dir == 1) {
-          triplets.push_back(Eigen::Triplet<double>(ind, i + nx * ((j + 1) + k * ny), -1));
+          triplets.push_back(Eigen::Triplet<double>(ind, i + nx * ((j + 1) + k * ny), 1));
         } else if (dir == 2) {
-          triplets.push_back(Eigen::Triplet<double>(ind, i + nx * (j + (k + 1) * ny), -1));
+          triplets.push_back(Eigen::Triplet<double>(ind, i + nx * (j + (k + 1) * ny), 1));
         }
       }
     }

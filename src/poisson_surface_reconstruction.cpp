@@ -73,10 +73,20 @@ void poisson_surface_reconstruction(
   Eigen::VectorXd rhs = G.transpose() * v;
   solver.compute(lhs);
   g = solver.solve(rhs);
-  std::cout << "Finished solving" << std::endl;
+
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
   ////////////////////////////////////////////////////////////////////////////
+
+  Eigen::SparseMatrix<double> W(n, nx * ny * nz);
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  Eigen::MatrixXd onesMat(1,n);
+  Eigen::VectorXd onesVec(g.rows());
+  onesMat.setOnes();
+  onesVec.setOnes();
+  double sigma = (1./n) * (onesMat * W * g).coeff(0);
+  g -= sigma * onesVec;
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
+
 }
