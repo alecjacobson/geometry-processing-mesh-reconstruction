@@ -34,10 +34,18 @@ int main(int argc, char *argv[])
     N = D.rightCols(3);
   }
 
+  std::cout << P.size() << " " << N.size() << '\n';
+
+  std::cout << "P" << '\n';
+  std::cout << P.topRows(5) << '\n';
+  std::cout << "N" << '\n';
+  std::cout << N.topRows(5) << '\n';
+
   // Reconstruct mesh
   Eigen::MatrixXd V;
   Eigen::MatrixXi F;
   poisson_surface_reconstruction(P,N,V,F);
+  // poisson_surface_reconstruction(P.topRows(5),N.topRows(5),V,F);
 
   // Create a libigl Viewer object to toggle between point cloud and mesh
   igl::viewer::Viewer viewer;
