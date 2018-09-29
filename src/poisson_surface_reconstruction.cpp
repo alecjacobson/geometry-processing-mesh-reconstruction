@@ -1,4 +1,6 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_grad.h"
+#include "fd_interpolate.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
 
@@ -47,6 +49,42 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+
+  // Staggered interpolation matrices
+
+  Eigen::SparseMatrix<double> Wx;
+  Eigen::SparseMatrix<double> Wy;
+  Eigen::SparseMatrix<double> Wz;
+
+  fd_interpolate(nx - 1, ny, nz, h, corner, P, Wx);
+  fd_interpolate(nx, ny - 1, nz, h, corner, P, Wy);
+  fd_interpolate(nx, ny, nz - 1, h, corner, P, Wz);
+
+  // Construct v
+
+  Eigen::VectorXd vx = Wx.transpose()*N.col(0);
+  Eigen::VectorXd vy = Wy.transpose()*N.col(1);
+  Eigen::VectorXd vz = Wz.transpose()*N.col(2);
+  Eigen::VectorXd v(vx.rows() + vy.rows() + vz.rows());
+  v << vx, vy, vz;
+
+  // Construct and solve the linear system
+
+  Eigen::SparseMatrix<double> G;
+  fd_grad(nx, ny, nz, h, G);
+
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver(G.transpose() * G);
+  g = solver.solve(G.transpose() * v);
+
+  // Determine the iso-level sigma
+
+  Eigen::SparseMatrix<double> W;
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+
+  double sigma = Eigen::VectorXd::Constant(P.rows(), 1.0).transpose()*W*g;
+  sigma /= P.rows();
+
+  g -= Eigen::VectorXd::Constant(g.rows(), sigma);
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this

@@ -35,24 +35,24 @@ void fd_partial_derivative(
         for (int j = 0; j < ny_D; j++) {
             for (int k = 0; k < nz_D; k++) {
 
-                int row_index = i + j * nx_D + k * ny_D * nx_D;
-                int col_index_prev = i + j * nx + k * ny * nx;
-                int col_index_next;
+                int staggered_ijk = i + j * nx_D + k * ny_D * nx_D;
+                int l_prev = i + j * nx + k * ny * nx;
+                int l_curr;
 
                 switch (dir) {
                 case 1:
-                    col_index_next = (i + 1) + j * nx + k * ny * nx;
+                    l_curr = (i + 1) + j * nx + k * ny * nx;
                     break;
                 case 2:
-                    col_index_next = i + (j + 1) * nx + k * ny * nx;
+                    l_curr = i + (j + 1) * nx + k * ny * nx;
                     break;
                 case 3:
-                    col_index_next = i + j * nx + (k + 1) * ny * nx;
+                    l_curr = i + j * nx + (k + 1) * ny * nx;
                     break;
                 }
 
-                D(row_index, col_index_prev) = -1;
-                D(row_index, col_index_next) = 1;
+                D.insert(staggered_ijk, l_prev) = -1;
+                D.insert(staggered_ijk, l_curr) = 1;
             }
         }
     }
