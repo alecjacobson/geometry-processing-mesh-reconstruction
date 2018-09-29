@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "fd_interpolate.h"
 #include "fd_grad.h"
-#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -78,7 +77,6 @@ void poisson_surface_reconstruction(
 
   // iso-value
   double sigma = 1.0/P.rows()*Eigen::RowVector3d::Constant(P.rows(), 1.0)*W*g;
-  std::cout << sigma << std::endl;
 
   // pre-shift g
   g = g.array() - sigma;
@@ -88,6 +86,4 @@ void poisson_surface_reconstruction(
   // function always extracts g=0, so "pre-shift" your g values by -sigma
   ////////////////////////////////////////////////////////////////////////////
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
-  std::cout << V.rows() << ", " << V.cols() << std::endl;
-  std::cout << F.rows() << ", " << F.cols() << std::endl;
 }
