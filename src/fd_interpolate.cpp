@@ -11,10 +11,10 @@ void fd_interpolate(
   Eigen::SparseMatrix<double> & W)
 {
   std::vector<Eigen::Triplet<double>> triplets; 
-  double px, py, pz, xd, yd, zd, cx, cy, cz;
+  double px, py, pz, xd, yd, zd, cx, cy, cz; // split everything up to think it through properly...
   int xi, yi, zi;
   for(int i = 0; i < P.rows(); i++) {
-    //point position relative to grid corner
+    //current  position relative to grid corner
     px = P(i,0) - corner(0);
     py = P(i,1) - corner(1);
     pz = P(i,2) - corner(2);

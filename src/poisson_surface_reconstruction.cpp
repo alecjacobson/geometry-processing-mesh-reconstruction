@@ -18,6 +18,7 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Construct FD grid, CONGRATULATIONS! You get this for free!
   ////////////////////////////////////////////////////////////////////////////
+
   // number of input points
   const int n = P.rows();
   // Grid dimensions
@@ -52,20 +53,25 @@ void poisson_surface_reconstruction(
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
 
   ////////////////////////////////////////////////////////////////////////////
-  // Add your code here
+  // Vicky's code here!
   ////////////////////////////////////////////////////////////////////////////
 
+  //calculate weights for each offset grid
   Eigen::SparseMatrix<double> Wx(n, (nx - 1) * ny * nz);
   Eigen::SparseMatrix<double> Wy(n, nx * (ny - 1) * nz);
   Eigen::SparseMatrix<double> Wz(n, nx * ny * (nz - 1));
   fd_interpolate((nx - 1), ny, nz, h, corner + Eigen::RowVector3d(h/2., 0, 0), P, Wx);
   fd_interpolate(nx, (ny - 1), nz, h, corner + Eigen::RowVector3d(0, h/2., 0), P, Wy);
   fd_interpolate(nx, ny, (nz - 1), h, corner + Eigen::RowVector3d(0, 0, h/2.), P, Wz);
+
+  //apply weights to get normals at grid locations
   Eigen::VectorXd vx = Wx.transpose() * N.col(0);
   Eigen::VectorXd vy = Wy.transpose() * N.col(1);
   Eigen::VectorXd vz = Wz.transpose() * N.col(2);
   Eigen::VectorXd v(vx.rows() + vy.rows() + vz.rows());
   v << vx, vy, vz;
+
+  //solve G^(T)Gg = G^(T)v
   Eigen::SparseMatrix<double> G;
   fd_grad(nx, ny, nz, h, G);
   Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
@@ -74,11 +80,7 @@ void poisson_surface_reconstruction(
   solver.compute(lhs);
   g = solver.solve(rhs);
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Run black box algorithm to compute mesh from implicit function: this
-  // function always extracts g=0, so "pre-shift" your g values by -sigma
-  ////////////////////////////////////////////////////////////////////////////
-
+  //shift g by sigma = (1/n)(1^(T)Wg)
   Eigen::SparseMatrix<double> W(n, nx * ny * nz);
   fd_interpolate(nx, ny, nz, h, corner, P, W);
   Eigen::MatrixXd onesMat(1,n);
@@ -87,6 +89,8 @@ void poisson_surface_reconstruction(
   onesVec.setOnes();
   double sigma = (1./n) * (onesMat * W * g).coeff(0);
   g -= sigma * onesVec;
+
+  //march!
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
 
 }

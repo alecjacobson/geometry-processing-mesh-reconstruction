@@ -13,6 +13,8 @@ void fd_partial_derivative(
   int x = nx;
   int y = ny;
   int z = nz;
+  
+  //augment grid size based on direction
   if (dir == 0) {
     x--;
   } else if (dir == 1) {
@@ -42,7 +44,7 @@ void fd_partial_derivative(
     }
   }
 
-  D.resize(x*y*z,nx*ny*nz);
+  D.resize(x * y * z, nx * ny * nz);
   D.setZero();
   D.setFromTriplets(triplets.begin(), triplets.end());
 
