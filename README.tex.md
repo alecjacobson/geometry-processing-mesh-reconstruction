@@ -22,10 +22,10 @@ In this assignment, we will be implementing a simplified version of the method
 in  "Poisson Surface Reconstruction" by Kazhdan et al. 2006. (Your first "task"
 will be to read and understand this paper).
 
-Many scanning technologies output a set of $n$ point samples $\P$ on the 
+Many scanning technologies output a set of $n$ point samples $\mathbf{P}$ on the 
 surface of the object in question. From these points and perhaps the location
-of the camera, one can also estimate normals $\N$ to the surface for each point
-$\p ∈ \P$.
+of the camera, one can also estimate normals $\mathbf{N}$ to the surface for each point
+$\mathbf{p} \in  \mathbf{P}$.
 
 For shape analysis, visualization and other downstream geometry processing
 phases, we would like to convert this finitely sampled _point cloud_ data into
@@ -46,34 +46,34 @@ Instead we will first convert the point cloud _sampling representation_ into a
 an _[implicit surface
 representation](https://en.wikipedia.org/wiki/Implicit%5Fsurface)_: where the
 unknown surface is defined as the
-[level-set](https://en.wikipedia.org/wiki/Level%5Fset) of some function $g: \R³
-→ \R$ mapping all points in space to a scalar value. For example, we may define
-the surface $∂\S$ of some solid, volumetric shape $\S$ to be all points $\x ∈
-\R³$ such that $g(x) = σ$, where we may arbitrarily set $σ=½$.
+[level-set](https://en.wikipedia.org/wiki/Level%5Fset) of some function $g: \mathbf{R}^3 
+\Rightarrow  \mathbf{R}$ mapping all points in space to a scalar value. For example, we may define
+the surface $\partial \mathbf{S}$ of some solid, volumetric shape $\mathbf{S}$ to be all points $\mathbf{x} \in 
+\mathbf{R}^3 $ such that $g(x) = \sigma $, where we may arbitrarily set $\sigma =\frac12 $.
 
 \\[
-∂\S = \{\x ∈ \R³ | g(\x)  = σ\}.
+\partial \mathbf{S} = \{\mathbf{x} \in  \mathbf{R}^3  | g(\mathbf{x})  = \sigma \}.
 \\]
 
 On the computer, it is straightforward
 [discretize](https://en.wikipedia.org/wiki/Discretization) an implicit
 function. We define a regular 3D grid of
 [voxels](http://en.wikipedia.org/wiki/Voxel) containing at least the [bounding
-box](https://en.wikipedia.org/wiki/Minimum%5Fbounding%5Fbox) of $\S$. At each
-node in the grid $\x_{i,j,k}$ we store the value of the implicit function
-$g(\x_{i,j,k})$. This defines $g$ _everywhere_ in the grid via [trilinear
+box](https://en.wikipedia.org/wiki/Minimum%5Fbounding%5Fbox) of $\mathbf{S}$. At each
+node in the grid $\mathbf{x}_{i,j,k}$ we store the value of the implicit function
+$g(\mathbf{x}_{i,j,k})$. This defines $g$ _everywhere_ in the grid via [trilinear
 interpolation](https://en.wikipedia.org/wiki/Trilinear_interpolation). 
 
 ![](images/trilinear-interpolation.jpg)
 
-For example, consider a point $\x = (⅓,¼,½)$ lying in the middle of the
+For example, consider a point $\mathbf{x} = (\frac13 ,\frac14 ,\frac12 )$ lying in the middle of the
 bottom-most, front-most, left-most cell. We know the values at the eight
 corners. Trilinear interpolation can be understood as [linear
 interpolation](https://en.wikipedia.org/wiki/Linear_interpolation) in the
-$x$-direction by $⅓$ on each $x$-axis-aligned edge, resulting in four values
+$x$-direction by $\frac13 $ on each $x$-axis-aligned edge, resulting in four values
 _living_ on the same plane. These can then be linearly interpolated in the $y$
-direction by $¼$ resulting in two points on the same line, and finally in the
-$z$ direction by $½$ to get to our evaluation point $(⅓,¼,½)$.
+direction by $\frac14 $ resulting in two points on the same line, and finally in the
+$z$ direction by $\frac12 $ to get to our evaluation point $(\frac13 ,\frac14 ,\frac12 )$.
 
 An implicit surface stored as the level-set of a trilinearly interpolated grid
 can be _contoured_ into a triangle mesh via the [Marching Cubes
@@ -84,48 +84,48 @@ determining what values for $g$ to store on the grid.
 
 ## Characteristic functions of solids
 
-We assume that our set of points $\P$ lie on the surface $∂\S$ of some physical
-[solid](https://en.wikipedia.org/wiki/Solid) object $\S$. This solid object
+We assume that our set of points $\mathbf{P}$ lie on the surface $\partial \mathbf{S}$ of some physical
+[solid](https://en.wikipedia.org/wiki/Solid) object $\mathbf{S}$. This solid object
 must have some non-trivial volume that we can calculate _abstractly_ as the
 integral of unit density over the solid:
 
 \\[
-∫\limits_\S 1 \;dA.                                                        %_
+\int \limits_\mathbf{S} 1 \;dA.                                                        %_
 \\]
 
 We can rewrite this definite integral as an indefinite integral over all of
-$\R^3$:
+$\mathbf{R}^3$:
 
 \\[
-∫\limits_{\R³} χ_\S(\x) \;dA,
+\int \limits_{\mathbf{R}^3 } χ_\mathbf{S}(\mathbf{x}) \;dA,
 \\]
 
 by introducing the [characteristic
-function](https://en.wikipedia.org/wiki/Indicator%5Ffunction) of $\S$, that is
-_one_ for points inside of the shape and _zero_ for points outside of $\S$:
+function](https://en.wikipedia.org/wiki/Indicator%5Ffunction) of $\mathbf{S}$, that is
+_one_ for points inside of the shape and _zero_ for points outside of $\mathbf{S}$:
 
 \\[
-χ_\S(\x) = \begin{cases}
-  1 & \text{ if $\x ∈ \S$ } \\
+χ_\mathbf{S}(\mathbf{x}) = \begin{cases}
+  1 & \text{ if $\mathbf{x} \in  \mathbf{S}$ } \\
   0 & \text{ otherwise}.
 \end{cases}                                                             %_
 \\]
 
 Compared to typical [implicit surface
 functions](https://en.wikipedia.org/wiki/Implicit%5Fsurface), this function
-represents the surface $∂\S$ of the shape $\S$ as the _discontinuity_ between
+represents the surface $\partial \mathbf{S}$ of the shape $\mathbf{S}$ as the _discontinuity_ between
 the one values and the zero values. Awkwardly, the gradient of the
-characteristic function $∇χ_\S$ is _not defined_ along $∂\S$.
+characteristic function $\nablaχ_\mathbf{S}$ is _not defined_ along $\partial \mathbf{S}$.
 
 One of the key observations made in [Kazhdan et al. 2006] is that the gradient
 of a infinitesimally [mollified](https://en.wikipedia.org/wiki/Mollifier)
 (smoothed) characteristic function: 
 
-  1. points in the direction of the normal near the surface $∂\S$, and 
+  1. points in the direction of the normal near the surface $\partial \mathbf{S}$, and 
   2. is zero everywhere else.
 
-Our goal will be to use our points $\P$ and normals $\N$ to _optimize_ an
-implicit function $g$ over a regular grid, so that its gradient $∇g$ meets
+Our goal will be to use our points $\mathbf{P}$ and normals $\mathbf{N}$ to _optimize_ an
+implicit function $g$ over a regular grid, so that its gradient $\nablag$ meets
 these two criteria. In that way, our $g$ will be an approximation of the
 mollified characteristic function.
 
@@ -137,24 +137,24 @@ mollified characteristic function.
 Let us start by making two assumptions:
 </span>
 
-  1. we know how to compute $∇g$ at each node location $\x_{i,j,k}$, and
-  2. our input points $\P$ all lie perfectly at grid nodes: 
-  $∃\ \x_{i,j,k} = \p_ℓ$.
+  1. we know how to compute $\nablag$ at each node location $\mathbf{x}_{i,j,k}$, and
+  2. our input points $\mathbf{P}$ all lie perfectly at grid nodes: 
+  $\exists\ \mathbf{x}_{i,j,k} = \mathbf{p}_\ell$.
 
 We will find out these assumptions are not realistic and we will have to relax
 them (i.e., we **_will not_** make these assumptions in the completion of the
 tasks). However, it will make the following algorithmic description easier on
 the first pass.
 
-If our points $\P$ lie at grid points, then our corresponding normals $\N$ also
+If our points $\mathbf{P}$ lie at grid points, then our corresponding normals $\mathbf{N}$ also
 _live_ at grid points. This leads to a very simple set of linear equations to
 define a function $g$ with a gradient equal to the surface normal at the
 surface and zero gradient away from the surface:
 
 \\[
-∇g(\x_{i,j,k}) = \v_{i,j,k} := \begin{cases}
-  \vphantom{\left(\begin{array}{c}0\\0\\0\end{array}\right)}
-  \n_ℓ & \text{ if $∃\ \p_ℓ = \x_{i,j,k}$}, \\
+\nablag(\mathbf{x}_{i,j,k}) = \mathbf{v}_{i,j,k} := \begin{cases}
+  \vphantom{\left(\begin{array}{c}0\\{0}\\{0}\end{array}\right)}
+  \mathbf{n}_\ell & \text{ if $\exists\ \mathbf{p}_\ell = \mathbf{x}_{i,j,k}$}, \\
   \left(\begin{array}{c}
     0\\
     0\\
@@ -163,7 +163,7 @@ surface and zero gradient away from the surface:
 \\]
 
 This is a _vector-valued_ equation. The gradients, normals and zero-vectors are
-three-dimensional (e.g., $∇g ∈ \R³$). In effect, this is _three equations_ for
+three-dimensional (e.g., $\nablag \in  \mathbf{R}^3 $). In effect, this is _three equations_ for
 every grid node.
 
 Since we only need a single number at each grid node (the value of $g$), we
@@ -174,53 +174,53 @@ determined](https://en.wikipedia.org/wiki/Overdetermined%5Fsystem), we will
 _optimize_ for the solution that best _minimizes_ the error of equation:
 
 \\[
-‖ ∇g(\x_{i,j,k})  - \v_{i,j,k}‖².
+\|  \nablag(\mathbf{x}_{i,j,k})  - \mathbf{v}_{i,j,k}\| ^2 .
 \\]
 
 We will treat the error of each grid location equally by minimizing the sum
 over all grid locations:
 
 \\[
-\min_\g ∑_i ∑_j ∑_k ½ ‖ ∇g(\x_{i,j,k})  - \v_{i,j,k}‖²,
+\mathop{\text{min}}_\mathbf{g} \Sigma _i \Sigma _j \Sigma _k \frac12  \|  \nablag(\mathbf{x}_{i,j,k})  - \mathbf{v}_{i,j,k}\| ^2 ,
 \\]
 
-where $\g$ (written in boldface) is a vector of _unknown_ grid-nodes values,
-where $g_{i,j,k} = g(\x_{i,j,k})$. 
+where $\mathbf{g}$ (written in boldface) is a vector of _unknown_ grid-nodes values,
+where $g_{i,j,k} = g(\mathbf{x}_{i,j,k})$. 
 
 Part of the convenience of working on a regular grid is that we can use the
 [finite difference
 method](https://en.wikipedia.org/wiki/Finite_difference_method) to approximate
-the gradient $∇g$ on the grid.
+the gradient $\nablag$ on the grid.
 
 After revisiting [our assumptions](#assumptions), we will be able to compute
 approximations of 
-the $x$-, $y$- and $z$-components of $∇g$ via a [sparse
+the $x$-, $y$- and $z$-components of $\nablag$ via a [sparse
 matrix](https://en.wikipedia.org/wiki/Sparse%5Fmatrix) multiplication of
-a "gradient matrix" $\G$ and our vector of unknown grid values $\g$. We will be
+a "gradient matrix" $\mathbf{G}$ and our vector of unknown grid values $\mathbf{g}$. We will be
 able to write the
 minimization problem above in matrix form:
 
 \\[
-\min_\g ½ ‖ \G \g - \v ‖²,
+\mathop{\text{min}}_\mathbf{g} \frac12  \|  \mathbf{G} \mathbf{g} - \mathbf{v} \| ^2 ,
 \\]
 
 or equivalently after expanding the norm:
 
 \\[
-\min_\g ½ \g^\transpose \G^\transpose \G \g - \g^\transpose \G^\transpose \v + \text{constant},
+\mathop{\text{min}}_\mathbf{g} \frac12  \mathbf{g}^{\mathsf T} \mathbf{G}^{\mathsf T} \mathbf{G} \mathbf{g} - \mathbf{g}^{\mathsf T} \mathbf{G}^{\mathsf T} \mathbf{v} + \text{constant},
 \\]
 
-This is a quadratic "energy" function of the variables of $\g$, its minimum occurs when
-an infinitesimal change in $\g$ produces no change in the energy:
+This is a quadratic "energy" function of the variables of $\mathbf{g}$, its minimum occurs when
+an infinitesimal change in $\mathbf{g}$ produces no change in the energy:
 
 \\[
-\frac{∂}{∂\g} ½ \g^\transpose \G^\transpose \G \g - \g^\transpose \G^\transpose \v = 0.
+\frac{\partial }{\partial \mathbf{g}} \frac12  \mathbf{g}^{\mathsf T} \mathbf{G}^{\mathsf T} \mathbf{G} \mathbf{g} - \mathbf{g}^{\mathsf T} \mathbf{G}^{\mathsf T} \mathbf{v} = 0.
 \\]
 
 Applying this derivative gives us a _sparse_ system of linear equations
 
 \\[
-\G^\transpose \G \g = \G^\transpose \v.
+\mathbf{G}^{\mathsf T} \mathbf{G} \mathbf{g} = \mathbf{G}^{\mathsf T} \mathbf{v}.
 \\]
 
 We will assume that we can solve this using a black box sparse solver.
@@ -233,15 +233,15 @@ The gradient of a function $g$ in 3D is nothing more than a vector containing
 partial derivatives in each coordinate direction:
 
 \\[
-∇g(\x) = \left(\begin{array}{c}
-    \frac{∂g(\x)}{∂x} \\
-    \frac{∂g(\x)}{∂y} \\
-    \frac{∂g(\x)}{∂z}
+\nablag(\mathbf{x}) = \left(\begin{array}{c}
+    \frac{\partial g(\mathbf{x})}{\partial x} \\
+    \frac{\partial g(\mathbf{x})}{\partial y} \\
+    \frac{\partial g(\mathbf{x})}{\partial z}
   \end{array}\right).
 \\]
 
 We will approximate each partial derivative individually. Let's consider the
-partial derivative in the $x$ direction, $∂g(\x)/∂x$, and we will assume
+partial derivative in the $x$ direction, $\partial g(\mathbf{x})/\partial x$, and we will assume
 without loss of generality that what we derive applies _symmetrically_ for $y$
 and $z$.
 
@@ -253,81 +253,81 @@ _before_ it in the $x$-direction then divided by the spatial distance between
 adjacent nodes $h$ (i.e., the grid step size):
 
 \\[
-\frac{∂g(\x_{i-½,j,k})}{∂x} = \frac{g_{i,j,k} - g_{i-1,j,k}}{h},
+\frac{\partial g(\mathbf{x}_{i-\frac12 ,j,k})}{\partial x} = \frac{g_{i,j,k} - g_{i-1,j,k}}{h},
 \\]
 
-where we use the index $i-½$ to indicate that this derivative in the
+where we use the index $i-\frac12 $ to indicate that this derivative in the
 $x$-direction lives on a [staggered
 grid](https://en.wikipedia.org/wiki/Staggered%5Fgrid) _in between_ the grid
 nodes where the function values for $g$.
 
 The following pictures show a 2D example, where $g$ lives on the nodes of a
-5×5 blue grid:
+5\times 5 blue grid:
 
 ![](images/primary-grid.jpg)
 
-The partial derivatives of $g$ with respect to the $x$-direction $∂g(\x)/∂x$
-live on a **4**×5 green, staggered grid:
+The partial derivatives of $g$ with respect to the $x$-direction $\partial g(\mathbf{x})/\partial x$
+live on a **4**\times 5 green, staggered grid:
 
 ![](images/staggered-grid-x.jpg)
 
-The partial derivatives of $g$ with respect to the $y$-direction $∂g(\x)/∂y$
-live on a 5×**4** yellow, staggered grid:
+The partial derivatives of $g$ with respect to the $y$-direction $\partial g(\mathbf{x})/\partial y$
+live on a 5\times **4** yellow, staggered grid:
 
 ![](images/staggered-grid-x-and-y.jpg)
 
-Letting $\g ∈ \R^{n_xn_yn_z × 1}$ be column vector of function values on the
+Letting $\mathbf{g} \in  \mathbf{R}^{n_xn_yn_z \times  1}$ be column vector of function values on the
 _primary grid_ (blue in the example pictures), we can construct a sparse matrix
-$\D^x ∈ \R^{(n_x-1)n_yn_z × n_xn_yn_z}$ so that each row $\D^x_{i-½,j,k} ∈
-\R^{1 × n_xn_yn_z}$ computes the partial derivative at the corresponding
-staggered grid location $\x_{i-½,j,k}$. The $ℓ$th entry in that row receives a
+$\mathbf{D}^x \in  \mathbf{R}^{(n_x-1)n_yn_z \times  n_xn_yn_z}$ so that each row $\mathbf{D}^x_{i-\frac12 ,j,k} \in 
+\mathbf{R}^{1 \times  n_xn_yn_z}$ computes the partial derivative at the corresponding
+staggered grid location $\mathbf{x}_{i-\frac12 ,j,k}$. The $\ell$th entry in that row receives a
 value only for neighboring primary grid nodes:
 
 \\[
-\D^x_{i-½,j,k}(ℓ) = 
+\mathbf{D}^x_{i-\frac12 ,j,k}(\ell) = 
   \begin{cases}
-  -1 & \text{ if $ℓ = i-1$ }\\
-   1 & \text{ if $ℓ = i$ }\\
+  -1 & \text{ if $\ell = i-1$ }\\
+   1 & \text{ if $\ell = i$ }\\
    0 & \text{ otherwise}
   \end{cases}.
 \\]
 
 > #### Indexing 3D arrays
 > 
-> Now, obviously in our code we cannot _index_ the column vector $\g$ by a
-> triplet of numbers $\{i,j,k\}$ or the rows of $\D^x$ by the triplet
-> ${i-½,j,k}$. We will assume that $\g_{i,j,k}$ refers to
+> Now, obviously in our code we cannot _index_ the column vector $\mathbf{g}$ by a
+> triplet of numbers $\{i,j,k\}$ or the rows of $\mathbf{D}^x$ by the triplet
+> ${i-\frac12 ,j,k}$. We will assume that $\mathbf{g}_{i,j,k}$ refers to
 > `g(i+j*n_x+k*n_y*n_x)`. Similarly, for the staggered grid subscripts
-> ${i-½,j,k}$ we will assume that $\D^x_{i-½,j,k}(ℓ)$ refers to the matrix
-> entry `Dx(i+j*n_x+k*n_y*n_x,l)`, where the $i-½$ has been _rounded down_.
+> ${i-\frac12 ,j,k}$ we will assume that $\mathbf{D}^x_{i-\frac12 ,j,k}(\ell)$ refers to the matrix
+> entry `Dx(i+j*n_x+k*n_y*n_x,l)`, where the $i-\frac12 $ has been _rounded down_.
 >
 
-We can similarly build matrices $\D^y$ and $\D^z$ and _stack_ these matrices
-vertically to create a gradient matrix $\G$:
+We can similarly build matrices $\mathbf{D}^y$ and $\mathbf{D}^z$ and _stack_ these matrices
+vertically to create a gradient matrix $\mathbf{G}$:
 
 \\[
-\G = 
+\mathbf{G} = 
 \left(\begin{array}{c}
-  \D^x \\
-  \D^y \\
-  \D^z
+  \mathbf{D}^x \\
+  \mathbf{D}^y \\
+  \mathbf{D}^z
 \end{array}\right)
-  ∈ \R^{ \left((n_x-1)n_yn_z + n_x(n_y-1)n_z + n_xn_y(n_z-1)\right)×n_xn_yn_z}
+  \in  \mathbf{R}^{ \left((n_x-1)n_yn_z + n_x(n_y-1)n_z + n_xn_y(n_z-1)\right)\times n_xn_yn_z}
 \\]
 
-This implies that our vector $\v$ of zeros and normals in our minimization
+This implies that our vector $\mathbf{v}$ of zeros and normals in our minimization
 problem should not _live_ on the primary, but rather it, too, should be broken
 into $x$-, $y$- and $z$-components that live of their resepctive staggered
 grids:
 
 \\[
-\v = 
+\mathbf{v} = 
 \left(\begin{array}{c}
-  \v^x \\
-  \v^y \\
-  \v^z 
+  \mathbf{v}^x \\
+  \mathbf{v}^y \\
+  \mathbf{v}^z 
 \end{array}\right)
-  ∈ \R^{ \left((n_x-1)n_yn_z + n_x(n_y-1)n_z + n_xn_y(n_z-1)\right)×1}.
+  \in  \mathbf{R}^{ \left((n_x-1)n_yn_z + n_x(n_y-1)n_z + n_xn_y(n_z-1)\right)\times 1}.
 \\]
 
 This leads to addressing our second assumption.
@@ -336,71 +336,71 @@ This leads to addressing our second assumption.
 
 At this point, we would _actually_ liked to have had that our input normals
 were given component-wise on the staggered grid. Then we could immediate stick
-them into $\v$. But this doesn't make much sense as each normal $\n_ℓ$ _lives_
-at its associated point $\p_ℓ$, regardless of any grids.
+them into $\mathbf{v}$. But this doesn't make much sense as each normal $\mathbf{n}_\ell$ _lives_
+at its associated point $\mathbf{p}_\ell$, regardless of any grids.
 
-To remedy this, we will distribute each component of each input normal $\n_ℓ$
-to $\v$ at the corresponding staggered grid node location.
+To remedy this, we will distribute each component of each input normal $\mathbf{n}_\ell$
+to $\mathbf{v}$ at the corresponding staggered grid node location.
 
-For example, consider the normal $\n$ at some point $\x_{1,¼,½}$. Conceptually,
+For example, consider the normal $\mathbf{n}$ at some point $\mathbf{x}_{1,\frac14 ,\frac12 }$. Conceptually,
 we'll think of the $x$-component of the normal $n_x$ as floating in the
-staggered grid corresponding to $\D^x$, in between the eight staggered grid
+staggered grid corresponding to $\mathbf{D}^x$, in between the eight staggered grid
 locations:
 
 \\[
-\x_{½,0,0},  \\
-\x_{1½,0,0},   \\
-\x_{½,1,0},  \\
-\x_{1½,1,0},   \\
-\x_{½,0,1},  \\
-\x_{1½,0,1},   \\
-\x_{½,1,1}, \text{ and } \\
-\x_{1½,1,1}
+\mathbf{x}_{\frac12 ,0,0},  \\
+\mathbf{x}_{1\frac12 ,0,0},   \\
+\mathbf{x}_{\frac12 ,1,0},  \\
+\mathbf{x}_{1\frac12 ,1,0},   \\
+\mathbf{x}_{\frac12 ,0,1},  \\
+\mathbf{x}_{1\frac12 ,0,1},   \\
+\mathbf{x}_{\frac12 ,1,1}, \text{ and } \\
+\mathbf{x}_{1\frac12 ,1,1}
 \\]
 
 Each of these staggered grid nodes has a corresponding $x$ value in the vector
-$\v^x$.
+$\mathbf{v}^x$.
 
-We will distribute $n_x$ to these entries in $\v^x$ by _adding_ a partial amount
+We will distribute $n_x$ to these entries in $\mathbf{v}^x$ by _adding_ a partial amount
 of $n_x$ to each. I.e., 
 
 \\[
-v^x_{½,0,0}  = w_{ ½,0,0}\left(\x_{1,¼,½}\right)\ n_x,  \\
-v^x_{1½,0,0} = w_{1½,0,0}\left(\x_{1,¼,½}\right)\ n_x,  \\
+v^x_{\frac12 ,0,0}  = w_{ \frac12 ,0,0}\left(\mathbf{x}_{1,\frac14 ,\frac12 }\right)\ n_x,  \\
+v^x_{1\frac12 ,0,0} = w_{1\frac12 ,0,0}\left(\mathbf{x}_{1,\frac14 ,\frac12 }\right)\ n_x,  \\
 \vdots \\
-v^x_{1½,1,1} = w_{1½,1,1}\left(\x_{1,¼,½}\right)\ n_x.
+v^x_{1\frac12 ,1,1} = w_{1\frac12 ,1,1}\left(\mathbf{x}_{1,\frac14 ,\frac12 }\right)\ n_x.
 \\]
-where $w_{iِ+½,j,k}(\p)$ is the trilinear interpolation _weight_ associate with
-staggered grid node $\x_{iِ+½,j,k}$ to interpolate a value at the point $\p$.
+where $w_{iِ+\frac12 ,j,k}(\mathbf{p})$ is the trilinear interpolation _weight_ associate with
+staggered grid node $\mathbf{x}_{iِ+\frac12 ,j,k}$ to interpolate a value at the point $\mathbf{p}$.
 The trilinear interpolation weights so that:
 
 \\[
 n_x =   \\
-  w_{ ½,0,0}( \x_{1,¼,½} ) \  v^x_{ ½,0,0} +  \\
-  w_{1½,0,0}( \x_{1,¼,½} ) \  v^x_{1½,0,0} +  \\
+  w_{ \frac12 ,0,0}( \mathbf{x}_{1,\frac14 ,\frac12 } ) \  v^x_{ \frac12 ,0,0} +  \\
+  w_{1\frac12 ,0,0}( \mathbf{x}_{1,\frac14 ,\frac12 } ) \  v^x_{1\frac12 ,0,0} +  \\
   \vdots \\
-  w_{1½,1,1}( \x_{1,¼,½} )\ v^x_{1½,1,1}.
+  w_{1\frac12 ,1,1}( \mathbf{x}_{1,\frac14 ,\frac12 } )\ v^x_{1\frac12 ,1,1}.
 \\]
 
 Since we need to do these for the $x$-component of each input normal, we will
-assemble a sparse matrix $\W^x ∈ n × (n_x-1)n_yn_z$ that _interpolates_
-$\v^x$ at each point $\p$:
+assemble a sparse matrix $\mathbf{W}^x \in  n \times  (n_x-1)n_yn_z$ that _interpolates_
+$\mathbf{v}^x$ at each point $\mathbf{p}$:
 
 \\[
-  ( \W^x \v^x ) ∈ \R^{n×1}
+  ( \mathbf{W}^x \mathbf{v}^x ) \in  \mathbf{R}^{n\times 1}
 \\]
 
-the transpose of $\W^x$ is not quite its
+the transpose of $\mathbf{W}^x$ is not quite its
 [_inverse_](https://en.wikipedia.org/wiki/Invertible_matrix), but instead can
 be interpreted as _distributing_ values onto staggered grid locations where
-$\v^x$ lives:
+$\mathbf{v}^x$ lives:
 
 \\[
-  \v^x = (\W^x)^\transpose \N^x.
+  \mathbf{v}^x = (\mathbf{W}^x)^{\mathsf T} \mathbf{N}^x.
 \\]
 
-Using this definition of $\v^x$ and analogously for $\v^y$ and $\v^z$ we can
-construct the vector $\v$ in our energy minimization problem above.
+Using this definition of $\mathbf{v}^x$ and analogously for $\mathbf{v}^y$ and $\mathbf{v}^z$ we can
+construct the vector $\mathbf{v}$ in our energy minimization problem above.
 
 > ### BTW, what's [Poisson](https://en.wikipedia.org/wiki/Siméon_Denis_Poisson) got to do with it?
 > 
@@ -409,7 +409,7 @@ construct the vector $\v$ in our energy minimization problem above.
 > [Dirichlet energy](https://en.wikipedia.org/wiki/Dirichlet's_energy):
 >
 > \\[
->   E(g) = ∫_Ω ‖∇g‖² dA
+>   E(g) = \int _\Omega  \| \nablag\| ^2  dA
 > \\]
 >
 > to _minimize_ this energy with respect to $g$ as an unknown _function_, we
@@ -420,7 +420,7 @@ construct the vector $\v$ in our energy minimization problem above.
 > In doing so we find that minimizers will satisfy:
 >
 > \\[
->   ∇⋅∇ g = 0 \text{ on Ω},
+>   \nabla\cdot\nabla g = 0 \text{ on \Omega },
 > \\]
 > 
 > known as [Laplaces'
@@ -429,14 +429,14 @@ construct the vector $\v$ in our energy minimization problem above.
 > If we instead start with a slightly different energy:
 > 
 > \\[
->   E(g) = ∫_Ω ‖∇g - V‖² dA,
+>   E(g) = \int _\Omega  \| \nablag - V\| ^2  dA,
 > \\]
 > 
 > where $V$ is a vector-valued function. Then applying the same machinery we
 > find that minimizers will satisfy:
 >
 > \\[
->   ∇⋅∇ g = ∇⋅V \text{ on Ω},
+>   \nabla\cdot\nabla g = \nabla\cdotV \text{ on \Omega },
 > \\]
 >
 > known as [Poisson's
@@ -444,7 +444,7 @@ construct the vector $\v$ in our energy minimization problem above.
 >
 >
 > Notice that if we interpret the transpose of our gradient matrix
-> $\G^\transpose$ as a _divergence matrix_ (we can and we should), then the
+> $\mathbf{G}^{\mathsf T}$ as a _divergence matrix_ (we can and we should), then the
 > structure of these smooth energies and equations are directly preserved in
 > our discrete energies and equations.
 >
@@ -458,31 +458,31 @@ Constant functions have no gradient. This means that we can add a constant
 function to our implicit function $g$ without changing its gradient:
 
 \\[
-∇g = ∇(g+c) = ∇g + ∇c = ∇g + 0.
+\nablag = \nabla(g+c) = \nablag + \nablac = \nablag + 0.
 \\]
 
-The same is true for our discrete gradient matrix $\G$: if the vector of grid
-values $\g$ is constant then $\G \g$ will be a vector zeros.
+The same is true for our discrete gradient matrix $\mathbf{G}$: if the vector of grid
+values $\mathbf{g}$ is constant then $\mathbf{G} \mathbf{g}$ will be a vector zeros.
 
 This is potentially problematic for our least squares solve: there are many
 solutions, since we can just add a constant. Fortunately, we _don't really
 care_. It's elegant to say that our surface is defined at $g=0$, but we'd be
 just as happy declaring that our surface is defined at $g=c$.
 
-To this end we just need to find _a solution_ $\g$, and then to pick a good
-iso-value $σ$.
+To this end we just need to find _a solution_ $\mathbf{g}$, and then to pick a good
+iso-value $\sigma $.
 
 As suggested in \[Kazhdan et al. 2006\], we can pick a good iso-value by
-interpolating our solution $\g$ at each of the input points (since we know
+interpolating our solution $\mathbf{g}$ at each of the input points (since we know
 they're on the surface) and averaging their values. For an appropriate
-interpolation matrix $\W$ on the _primary (non-staggered) grid_ this can be
+interpolation matrix $\mathbf{W}$ on the _primary (non-staggered) grid_ this can be
 written as:
 
 \\[
-σ = \frac{1}{n} \mathbf{1}^\transpose \W \g,
+\sigma  = \frac{1}{n} \mathbf{1}^{\mathsf T} \mathbf{W} \mathbf{g},
 \\]
 
-where $\mathbf{1} ∈ \R^{n×1}$ is a vector of ones.
+where $\mathbf{1} \in  \mathbf{R}^{n\times 1}$ is a vector of ones.
 
 ### Just how simplified from \[Kazhdan et al. 2006\] is this assignment
 
@@ -538,8 +538,8 @@ You will need to _distribute_ the given normals `N` onto the staggered grid
 values in `v` via sparse trilinear interpolation matrices `Wx`, `Wy` and `Wz`
 for each staggered grid. 
 
-Then you will need to construct and solve the linear system $\G^\transpose \G
-\g = \G^\transpose \v$.
+Then you will need to construct and solve the linear system $\mathbf{G}^{\mathsf T} \mathbf{G}
+\mathbf{g} = \mathbf{G}^{\mathsf T} \mathbf{v}$.
 
 Determine the iso-level `sigma` to extract from the `g`.
 
