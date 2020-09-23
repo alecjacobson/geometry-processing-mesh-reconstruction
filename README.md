@@ -240,17 +240,17 @@ grid](https://en.wikipedia.org/wiki/Staggered%5Fgrid) _in between_ the grid
 nodes where the function values for <img src="/tex/3cf4fbd05970446973fc3d9fa3fe3c41.svg?invert_in_darkmode&sanitize=true" align=middle width=8.430376349999989pt height=14.15524440000002pt/>.
 
 The following pictures show a 2D example, where <img src="/tex/3cf4fbd05970446973fc3d9fa3fe3c41.svg?invert_in_darkmode&sanitize=true" align=middle width=8.430376349999989pt height=14.15524440000002pt/> lives on the nodes of a
-5\times 5 blue grid:
+<img src="/tex/3e2a76e23fe9c67f0c6a1d099d494151.svg?invert_in_darkmode&sanitize=true" align=middle width=36.52961069999999pt height=21.18721440000001pt/> blue grid:
 
 ![](images/primary-grid.jpg)
 
 The partial derivatives of <img src="/tex/3cf4fbd05970446973fc3d9fa3fe3c41.svg?invert_in_darkmode&sanitize=true" align=middle width=8.430376349999989pt height=14.15524440000002pt/> with respect to the <img src="/tex/332cc365a4987aacce0ead01b8bdcc0b.svg?invert_in_darkmode&sanitize=true" align=middle width=9.39498779999999pt height=14.15524440000002pt/>-direction <img src="/tex/eab7528ff6cda4ba4cabe93ba6c4d2ea.svg?invert_in_darkmode&sanitize=true" align=middle width=68.08791659999999pt height=24.65753399999998pt/>
-live on a **4**\times 5 green, staggered grid:
+live on a <img src="/tex/6e9103d18236e9931449ce1f3a303f5c.svg?invert_in_darkmode&sanitize=true" align=middle width=36.52961069999999pt height=21.18721440000001pt/> green, staggered grid:
 
 ![](images/staggered-grid-x.jpg)
 
 The partial derivatives of <img src="/tex/3cf4fbd05970446973fc3d9fa3fe3c41.svg?invert_in_darkmode&sanitize=true" align=middle width=8.430376349999989pt height=14.15524440000002pt/> with respect to the <img src="/tex/deceeaf6940a8c7a5a02373728002b0f.svg?invert_in_darkmode&sanitize=true" align=middle width=8.649225749999989pt height=14.15524440000002pt/>-direction <img src="/tex/3236f157a53b70469c7a6de44c7d21f0.svg?invert_in_darkmode&sanitize=true" align=middle width=67.34215289999999pt height=24.65753399999998pt/>
-live on a 5\times **4** yellow, staggered grid:
+live on a <img src="/tex/0ee0c8e0c23693d9c6b800197f53ea56.svg?invert_in_darkmode&sanitize=true" align=middle width=36.52961069999999pt height=21.18721440000001pt/> yellow, staggered grid:
 
 ![](images/staggered-grid-x-and-y.jpg)
 
