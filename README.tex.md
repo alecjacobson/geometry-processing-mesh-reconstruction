@@ -282,17 +282,17 @@ grid](https://en.wikipedia.org/wiki/Staggered%5Fgrid) _in between_ the grid
 nodes where the function values for $g$.
 
 The following pictures show a 2D example, where $g$ lives on the nodes of a
-5\times 5 blue grid:
+$5\times 5$ blue grid:
 
 ![](images/primary-grid.jpg)
 
 The partial derivatives of $g$ with respect to the $x$-direction $\partial g(\mathbf{x})/\partial x$
-live on a **4**\times 5 green, staggered grid:
+live on a $4 \times 5$ green, staggered grid:
 
 ![](images/staggered-grid-x.jpg)
 
 The partial derivatives of $g$ with respect to the $y$-direction $\partial g(\mathbf{x})/\partial y$
-live on a 5\times **4** yellow, staggered grid:
+live on a $5\times 4$ yellow, staggered grid:
 
 ![](images/staggered-grid-x-and-y.jpg)
 
