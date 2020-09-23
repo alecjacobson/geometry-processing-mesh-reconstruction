@@ -1,6 +1,6 @@
 # Geometry Processing – Mesh Reconstruction
 
-> **To get started:** Fork this repository then issue
+> **To get started:** Clone this repository using 
 > 
 >     git clone --recursive http://github.com/[username]/geometry-processing-mesh-reconstruction.git
 >
