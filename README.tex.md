@@ -19,7 +19,7 @@ Once built, you can execute the assignment from inside the `build/` using
 ## Background
 
 In this assignment, we will be implementing a simplified version of the method
-in  "Poisson Surface Reconstruction" by Kazhdan et al. 2006. (Your first "task"
+in  ["Poisson Surface Reconstruction" by Kazhdan et al. 2006.](papers/poisson-surface-reconstruction.pdf) (Your first "task"
 will be to read and understand this paper).
 
 Many scanning technologies output a set of $n$ point samples $\mathbf{P}$ on the 
