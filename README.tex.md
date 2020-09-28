@@ -3,6 +3,7 @@
 > **To get started:** Clone this repository then issue
 > 
 >     git clone --recursive http://github.com/alecjacobson/geometry-processing-mesh-reconstruction.git
+>
 
 ## Installation, Layout, and Compilation
 
