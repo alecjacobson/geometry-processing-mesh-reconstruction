@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include "fd_interpolate.h"
+#include "fd_grad.h"
+#include "fd_partial_derivative.h"
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -42,12 +46,89 @@ void poisson_surface_reconstruction(
       }
     }
   }
-  Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
+  Eigen::VectorXd g = Eigen::VectorXd::Ones(nx*ny*nz);
 
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+    
+    
+    const int vDim =(nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1);
+    Eigen::MatrixXd smallV;
+    smallV.resize(vDim,1);
+    Eigen::SparseMatrix<double> G;
+        
+    double sigma = 0;
+    int dims[3];
+    dims[0] = nx;
+    dims[1] = ny;
+    dims[2] = nz;
+    int counter = 0;
+    
+    //Compute v_x, v_y, v_z
+    for (int dir = 0; dir < 3; dir ++) {
+        Eigen::SparseMatrix<double> tempMat;
+        Eigen::MatrixXd tempV;
+        
+        //Shifts the box for the appropriate updated dimensions
+        dims[dir] = dims[dir] - 1;
+        corner(dir) = corner(dir) + 0.5*h;
+        fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
+        corner(dir) = corner(dir) - h;
 
+        tempV = tempMat.transpose()* N.col(dir);
+        
+
+        
+        for (int xVal = 0; xVal < dims[0] ; xVal ++) {
+            for (int yVal = 0; yVal < dims[1]; yVal ++) {
+                for (int zVal = 0; zVal <  dims[2] ; zVal ++) {
+                    
+                    int pointNo = xVal + (dims[0])*(yVal + zVal*(dims[1]));
+                    
+                    //Computing the values for v
+                    
+                    
+                    
+                    smallV(counter + pointNo, 0) = tempV(pointNo,0);
+                    
+                }
+            }
+        }
+        
+        
+        counter = counter + dims[0]*dims[1]*dims[2];
+        dims[dir] = dims[dir] + 1;
+        
+        
+    }
+   
+    //Compute the matrix of concatenated partial derivatives
+    fd_grad(nx,ny,nz,h,G);
+    
+    //Use Conjugate Gradient solver
+    Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
+    
+    Eigen::SparseMatrix<double> tempG = G.transpose()*G;
+    
+    
+    solver.compute(tempG);
+    
+    //Solves GtGg = G^tv for g;
+    g = solver.solve(G.transpose()*smallV);
+
+    
+    Eigen::SparseMatrix<double> tempMat;
+    fd_interpolate(dims[0], dims[1],dims[2],h,corner,P, tempMat);
+    
+    Eigen::MatrixXd newG = tempMat * g;
+    for (int i = 0; i < P.rows(); i ++){
+    sigma +=  newG(i,0);
+    }
+    
+    sigma = sigma / (double) P.rows();
+    g.array() -= sigma;
+    
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
