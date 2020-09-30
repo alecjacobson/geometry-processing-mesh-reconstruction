@@ -1,6 +1,9 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <iostream>
+#include "fd_interpolate.h"
+#include "fd_grad.h"
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,7 +50,41 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  Eigen::RowVector3d dx(h/2., 0., 0.);
+  Eigen::RowVector3d dy(0., h/2., 0.);
+  Eigen::RowVector3d dz(0., 0., h/2.);
+  Eigen::SparseMatrix<double> Wx;
+  fd_interpolate(nx - 1, ny, nz, h, corner + dx, P.rowwise() + dx, Wx);
+  Eigen::VectorXd vx = Wx.transpose() * N.col(0);
+  std::cout << vx.size() << std::endl;
 
+  Eigen::SparseMatrix<double> Wy;
+  fd_interpolate(nx, ny - 1, nz, h, corner + dy, P.rowwise() + dy, Wy);
+  Eigen::VectorXd vy = Wy.transpose() * N.col(1);
+
+  Eigen::SparseMatrix<double> Wz;
+  fd_interpolate(nx, ny, nz - 1, h, corner + dz, P.rowwise() + dz, Wz);
+  Eigen::VectorXd vz = Wz.transpose() * N.col(2);
+
+  Eigen::VectorXd v(vx.size() + vy.size() + vz.size());
+  v << vx, vy, vz;
+
+  Eigen::SparseMatrix<double> G;
+  fd_grad(nx, ny, nz, h, G);
+  std::cout << "G rows: " << G.rows() << " G cols: " << G.cols() << std::endl;
+
+  std::cout << "Solving..." << std::endl;
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
+  solver.compute(G.transpose() * G);
+  g = solver.solve(G.transpose() * v);
+  std::cout << "#iterations:     " << solver.iterations() << std::endl;
+  std::cout << "estimated error: " << solver.error()      << std::endl;
+
+  Eigen::SparseMatrix<double> W;
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+
+  double sigma = (W * g).mean();
+  g = -(g - Eigen::VectorXd::Ones(g.size()) * sigma);
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
