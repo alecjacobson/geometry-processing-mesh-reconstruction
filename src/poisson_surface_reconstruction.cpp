@@ -1,6 +1,12 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_grad.h"
+#include "fd_partial_derivative.h"
+#include "fd_interpolate.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <Eigen/IterativeLinearSolvers>
+#include "igl/cat.h"
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -12,6 +18,7 @@ void poisson_surface_reconstruction(
   // Construct FD grid, CONGRATULATIONS! You get this for free!
   ////////////////////////////////////////////////////////////////////////////
   // number of input points
+
   const int n = P.rows();
   // Grid dimensions
   int nx, ny, nz;
@@ -44,10 +51,50 @@ void poisson_surface_reconstruction(
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Add your code here
-  ////////////////////////////////////////////////////////////////////////////
+  
+  Eigen::SparseMatrix<double> G;
 
+  Eigen::SparseMatrix<double> W;
+  Eigen::SparseMatrix<double> Wx;
+  Eigen::SparseMatrix<double> Wy;
+  Eigen::SparseMatrix<double> Wz;
+
+  Eigen::RowVector3d shift_x(h/2, 0., 0.);
+  Eigen::RowVector3d shift_y(0., h/2, 0.);
+  Eigen::RowVector3d shift_z(0., 0., h/2);
+
+  Eigen::VectorXd vx;
+  Eigen::VectorXd vy;
+  Eigen::VectorXd vz;
+  Eigen::VectorXd v;
+  
+  fd_grad(nx, ny, nz, h, G);
+
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  fd_interpolate(nx-1, ny, nz, h, corner + shift_x, P, Wx);
+  fd_interpolate(nx, ny-1, nz, h, corner + shift_y, P, Wy);
+  fd_interpolate(nx, ny, nz-1, h, corner + shift_z, P, Wz);
+
+  vx = Wx.transpose() * N.col(0);
+  vy = Wy.transpose() * N.col(1);
+  vz = Wz.transpose() * N.col(2);
+
+  v = igl::cat(1, vx, vy);
+  v = igl::cat(1, v, vz);
+
+
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+
+  solver.compute(G.transpose() * G);
+  std::cout << nx << std::endl;
+  std::cout << ny << std::endl;
+  std::cout << nz << std::endl;
+  std::cout << N.rows() << std::endl;
+  g = solver.solve(G.transpose() * v);
+
+  double sigma = (1/n)*Eigen::VectorXd::Ones(W.rows()).transpose()*(W*g);
+  g = g - (Eigen::VectorXd::Ones(g.rows())*sigma);
+  std::cout << sigma << std::endl;
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
