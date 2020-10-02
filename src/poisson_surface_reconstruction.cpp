@@ -1,6 +1,9 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include "fd_interpolate.h"
+#include "fd_grad.h"
+#include <Eigen/Sparse>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,6 +50,36 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  typedef Eigen::SparseMatrix<double> SpMat;
+
+  // derive v via sparse trilinear interpolation matrices Wx, Wy, Wz
+  SpMat Wx, Wy, Wz;
+  fd_interpolate(nx - 1, ny, nz, h, corner + Eigen::RowVector3d(0.5*h, 0, 0), P, Wx);
+  fd_interpolate(nx, ny - 1, nz, h, corner + Eigen::RowVector3d(0, 0.5*h, 0), P, Wy);
+  fd_interpolate(nx, ny, nz - 1, h, corner + Eigen::RowVector3d(0, 0, 0.5*h), P, Wz);
+  Eigen::VectorXd vx, vy, vz, v;
+  vx = (Wx.transpose())*(N.col(0));
+  vy = (Wy.transpose())*(N.col(1));
+  vz = (Wz.transpose())*(N.col(2));
+  v.resize(vx.rows() + vy.rows() + vz.rows());
+  v << vx, vy, vz;
+  
+  // derive G
+  SpMat G;
+  fd_grad(nx, ny, nz, h, G);
+
+  // construct and solve linear system G^TGg=G^Tv
+  Eigen::ConjugateGradient<SpMat> solver;
+  solver.compute((G.transpose())*G);
+  g = solver.solve((G.transpose())*v);
+
+  // determine the iso-level sigma
+  SpMat W;
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  double sigma = ((W*g).array().sum())/double(n);
+
+  // subtract sigma g to get final g
+  g = g.array() - sigma;
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
