@@ -1,4 +1,6 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_interpolate.h"
+#include "fd_grad.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
 
@@ -10,6 +12,7 @@ void poisson_surface_reconstruction(
 {
   ////////////////////////////////////////////////////////////////////////////
   // Construct FD grid, CONGRATULATIONS! You get this for free!
+  // Thanks!
   ////////////////////////////////////////////////////////////////////////////
   // number of input points
   const int n = P.rows();
@@ -43,11 +46,26 @@ void poisson_surface_reconstruction(
     }
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
+  
+  Eigen::SparseMatrix<double> W, Wx, Wy, Wz, G;
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  fd_interpolate(nx-1, ny, nz, h, corner + (h/2)*Eigen::RowVector3d(1,0,0), P, Wx);
+  fd_interpolate(nx, ny-1, nz, h, corner + (h/2)*Eigen::RowVector3d(0,1,0), P, Wy);
+  fd_interpolate(nx, ny, nz-1, h, corner + (h/2)*Eigen::RowVector3d(0,0,1), P, Wz);
+  fd_grad(nx, ny, nz, h, G);
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Add your code here
-  ////////////////////////////////////////////////////////////////////////////
+  Eigen::VectorXd v((nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1));
+  v << Wx.transpose() * N.col(0),
+       Wy.transpose() * N.col(1),
+       Wz.transpose() * N.col(2);
 
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
+  solver.compute(G.transpose() * G);
+  g = solver.solve(G.transpose() * v);
+
+  double sigma = (1./n) * Eigen::RowVectorXd::Ones(n) * W * g;
+  g -= sigma * Eigen::VectorXd::Ones(nx*ny*nz);
+  
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
