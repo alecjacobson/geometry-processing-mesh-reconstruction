@@ -19,4 +19,40 @@ void fd_grad(
   const int nz,
   const double h,
   Eigen::SparseMatrix<double> & G);
+
+
+template <typename T>
+void vstack3(
+    Eigen::SparseMatrix<T>& O,
+    Eigen::SparseMatrix<T>& A,
+    Eigen::SparseMatrix<T>& B,
+    Eigen::SparseMatrix<T>& C)
+{
+    typedef Eigen::Triplet<T> Triplets;
+    
+    std::vector<Triplets> triplets;
+    triplets.reserve(A.nonZeros() + B.nonZeros() + C.nonZeros());
+
+    for (int k = 0; k < A.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(A, k); it; ++it) {
+            triplets.emplace_back(it.row(), it.col(), it.value());
+        }
+    }
+
+    for (int k = 0; k < B.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(B, k); it; ++it) {
+            triplets.emplace_back(A.rows() + it.row(), it.col(), it.value());
+        }
+    }
+
+    for (int k = 0; k < C.outerSize(); ++k) {
+        for (Eigen::SparseMatrix<double>::InnerIterator it(C, k); it; ++it) {
+            triplets.emplace_back(A.rows() + B.rows() + it.row(), it.col(), it.value());
+        }
+    }
+
+    O.setFromTriplets(triplets.begin(), triplets.end());
+}
+
+
 #endif
