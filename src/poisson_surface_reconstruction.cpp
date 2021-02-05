@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <igl/cat.h>
+#include "fd_interpolate.h"
+#include "fd_grad.h"
+#include <fstream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -43,7 +47,30 @@ void poisson_surface_reconstruction(
     }
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
+  //printf("%d %d %d %d ",n,nx,ny,nz);
+  Eigen::RowVector3d c1(h/2,0,0),c2(0,h/2,0),c3(0,0,h/2);
+  Eigen::SparseMatrix<double> W1,W2,W3,W;
+  fd_interpolate(nx-1,ny,nz,h,corner+c1,P,W1);
+  fd_interpolate(nx,ny-1,nz,h,corner+c2,P,W2);
+  fd_interpolate(nx,ny,nz-1,h,corner+c3,P,W3);
+  Eigen::VectorXd V1((nx-1)*ny*nz),V2(nx*(ny-1)*nz),V3(nx*ny*(nz-1)),vv((nx-1)*ny*nz+nx*(ny-1)*nz+nx*ny*(nz-1));
+  V1=W1.transpose()*N.col(0);
+  V2=W2.transpose()*N.col(1);
+  V3=W3.transpose()*N.col(2);
+  vv << V1,V2,V3;
 
+  Eigen::SparseMatrix<double> gg;
+  fd_grad(nx,ny,nz,h,gg);
+
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+  solver.compute(gg.transpose()*gg);
+  printf("%d %d ",gg.rows(),gg.cols());
+  Eigen::MatrixXd b=gg.transpose()*vv;
+  g=solver.solve(b);
+
+  fd_interpolate(nx,ny,nz,h,corner,P,W);
+  double sigma=(Eigen::MatrixXd::Ones(1,n)*W*g).value()/n;
+  g=g-Eigen::VectorXd::Ones(nx*ny*nz)*sigma;
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
