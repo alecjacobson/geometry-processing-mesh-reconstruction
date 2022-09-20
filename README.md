@@ -190,7 +190,7 @@ determined](https://en.wikipedia.org/wiki/Overdetermined%5Fsystem), we will
 _optimize_ for the solution that best _minimizes_ the error of equation:
 
 $$
-\|  {\nabla}g(\mathbf{x}_{i,j,k})  - \mathbf{v}_{i,j,k}\| ^2 .
+\|  {\nabla}g(\mathbf{x}\_{i,j,k})  - \mathbf{v}\_{i,j,k}\| ^2 .
 $$
 
 
@@ -198,7 +198,7 @@ We will treat the error of each grid location equally by minimizing the sum
 over all grid locations:
 
 $$
-\mathop{\text{min}}_\mathbf{g} \sum _i \sum _j \sum _k \frac12  \|  {\nabla}g(\mathbf{x}_{i,j,k})  - \mathbf{v}_{i,j,k}\| ^2 ,
+\mathop{\text{min}}\_\mathbf{g} \sum \_i \sum \_j \sum \_k \frac12  \|  {\nabla}g(\mathbf{x}\_{i,j,k})  - \mathbf{v}\_{i,j,k}\| ^2 ,
 $$
 
 
