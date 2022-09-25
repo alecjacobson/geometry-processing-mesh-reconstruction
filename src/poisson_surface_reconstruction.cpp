@@ -1,5 +1,8 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_interpolate.h"
+#include "fd_grad.h"
 #include <igl/copyleft/marching_cubes.h>
+#include <igl/cat.h>
 #include <algorithm>
 
 void poisson_surface_reconstruction(
@@ -42,11 +45,23 @@ void poisson_surface_reconstruction(
       }
     }
   }
-  Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
+  Eigen::VectorXd g = Eigen::VectorXd::Zero(nx * ny * nz);
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Add your code here
-  ////////////////////////////////////////////////////////////////////////////
+  Eigen::SparseMatrix<double> Wx(n, (nx - 1) * ny * nz), Wy(n, nx * (ny - 1) * nz), Wz(n, nx * ny * (nz - 1)), W(n, nx * ny * nz), G;
+  fd_interpolate(nx - 1, ny, nz, h, corner + Eigen::RowVector3d(h/2, 0, 0), P, Wx);
+  fd_interpolate(nx, ny - 1, nz, h, corner + Eigen::RowVector3d(0, h/2, 0), P, Wy);
+  fd_interpolate(nx, ny, nz - 1, h, corner + Eigen::RowVector3d(0, 0, h/2), P, Wz);
+
+  Eigen::VectorXd v((nx - 1) * ny * nz + nx * (ny - 1) * nz + nx * ny * (nz - 1));
+  v << Wx.transpose() * N.col(0), Wy.transpose() * N.col(1), Wz.transpose() * N.col(2);
+  fd_grad(nx, ny, nz, h, G);
+
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> s;
+  s.compute(G.transpose() * G);
+  g = s.solve(G.transpose() * v);
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  double sigma = -(Eigen::RowVectorXd::Ones(n) / n) * W * g;
+  g += sigma * Eigen::VectorXd::Ones(nx * ny * nz);
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
