@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include "fd_grad.h"
+#include "fd_interpolate.h"
+#include <Eigen/SparseCholesky>
+#include <iostream>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -46,6 +50,40 @@ void poisson_surface_reconstruction(
 
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
+  Eigen::SparseMatrix<double> W, Wx, Wy, Wz, G;
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  fd_grad(nx, ny, nz, h, G);
+
+  fd_interpolate(nx - 1, ny, nz, h, corner + Eigen::RowVector3d(h * 0.5, 0, 0), P, Wx);
+  fd_interpolate(nx, ny - 1, nz, h, corner + Eigen::RowVector3d(0, h * 0.5, 0), P, Wy);
+  fd_interpolate(nx, ny, nz - 1, h, corner + Eigen::RowVector3d(0, 0, h * 0.5), P, Wz);
+
+  Eigen::VectorXd vector, vx, vy, vz;
+  vx = Wx.transpose() * N.col(0);
+  vy = Wy.transpose() * N.col(1);
+  vz = Wz.transpose() * N.col(2);
+
+  vector.resize((nx - 1) * ny * nz + nx * (ny - 1) * nz + nx * ny * (nz - 1));
+  vector << vx, vy, vz;
+
+  // BiCGSTAB solver always fail for me so use ConjugateGradient
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> solver;
+  Eigen::SparseMatrix<double> A = G.transpose() * G;
+  Eigen::VectorXd b = G.transpose() * vector;
+  solver.compute(A);
+  if(solver.info()!=Eigen::Success) {
+    std::cout << "Decomposition failed" << std::endl;
+    return;
+  }
+  g = solver.solve(b);
+  if(solver.info()!=Eigen::Success) {
+    std::cout << "Solver failed" << std::endl;
+    return;
+  }
+
+  double sigma = (1.0 / n) * Eigen::RowVectorXd::Ones(n) * W * g;
+  g -= sigma * Eigen::VectorXd::Ones(nx*ny*nz);
+
   ////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
