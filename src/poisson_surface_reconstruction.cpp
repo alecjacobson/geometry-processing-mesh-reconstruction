@@ -1,7 +1,9 @@
 #include "poisson_surface_reconstruction.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
-
+#include "fd_grad.h"
+#include "fd_interpolate.h"
+#include <iostream>
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
     const Eigen::MatrixXd & N,
@@ -43,14 +45,49 @@ void poisson_surface_reconstruction(
     }
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
-
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
+
+  //Distribute normal 
+  Eigen::VectorXd v = Eigen::VectorXd::Zero((nx-1) * ny * nz + nx * (ny-1) * nz + nx * ny * (nz -1));
+  //Vx
+  Eigen::SparseMatrix<double> W_x(n, (nx-1) * ny * nz);
+  Eigen::VectorXd v_x((nx-1) * ny * nz);
+  fd_interpolate(nx-1,ny,nz,h,corner + h * 0.5 * Eigen::RowVector3d(1,0,0), P,W_x);
+  v_x = W_x.transpose() * N.col(0);
+  //Vy
+  Eigen::SparseMatrix<double> W_y(n, nx * (ny-1) * nz);
+  Eigen::VectorXd v_y(nx * (ny-1) * nz);
+  fd_interpolate(nx,ny-1,nz,h,corner + h * 0.5 * Eigen::RowVector3d(0,1,0), P,W_y);
+  v_y = W_y.transpose() * N.col(1);
+  //Vz
+  Eigen::SparseMatrix<double> W_z(n, nx * ny * (nz-1));
+  Eigen::VectorXd v_z(nx * ny * (nz-1));
+  fd_interpolate(nx,ny,nz-1,h,corner + h * 0.5 * Eigen::RowVector3d(0,0,1), P,W_z);
+  v_z = W_z.transpose() * N.col(2);
+  v << v_x, v_y, v_z;
+  //solve
+  Eigen::SparseMatrix<double> G((nx-1) * ny * nz + nx * (ny-1) * nz + nx * ny * (nz -1), 
+    nx * ny * nz);
+  fd_grad(nx, ny, nz, h, G);
+
+  //Eigen::ConjugateGradient<Eigen::SparseMatrix<double>> cg;
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> cg;
+  cg.compute(G.transpose() * G);
+  Eigen::VectorXd b(nx * ny * nz);
+  b = G.transpose() * v;
+  g = cg.solve(b);
+  //sigma
+  Eigen::SparseMatrix<double> W_sigma(n, nx * ny * nz);
+  fd_interpolate(nx, ny, nz, h, corner, P, W_sigma);
+  double sigma = 1.00/n * (Eigen::MatrixXd::Ones(1, n) * W_sigma *g).value();
+  g = g - sigma * Eigen::MatrixXd::Ones(nx*ny*nz,1);
   ////////////////////////////////////////////////////////////////////////////
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
   // function always extracts g=0, so "pre-shift" your g values by -sigma
   ////////////////////////////////////////////////////////////////////////////
+
   igl::copyleft::marching_cubes(g, x, nx, ny, nz, V, F);
 }
