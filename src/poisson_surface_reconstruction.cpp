@@ -1,6 +1,10 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_interpolate.h"
+#include "fd_grad.h"
+#include <igl/cat.h>
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
+#include <Eigen/src/IterativeLinearSolvers/BiCGSTAB.h>
 
 void poisson_surface_reconstruction(
     const Eigen::MatrixXd & P,
@@ -47,6 +51,57 @@ void poisson_surface_reconstruction(
   ////////////////////////////////////////////////////////////////////////////
   // Add your code here
   ////////////////////////////////////////////////////////////////////////////
+  std::cout << "My code starts here." << std::endl;
+
+
+  Eigen::SparseMatrix<double> Wx;
+  Eigen::SparseMatrix<double> Wy;
+  Eigen::SparseMatrix<double> Wz;
+
+  Eigen::SparseMatrix<double> W;
+
+  std::cout << "Sparse matrices are made." << std::endl;
+
+  fd_interpolate(nx-1, ny, nz, h, corner, P, Wx);
+  fd_interpolate(nx, ny-1, nz, h, corner, P, Wy);
+  fd_interpolate(nx, ny, nz-1, h, corner, P, Wz);
+
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+
+  std::cout << "Weight matrices computed." << std::endl;
+
+  Eigen::VectorXd vx = Wx.transpose() * N.col(0);
+  Eigen::VectorXd vy = Wy.transpose() * N.col(1);
+  Eigen::VectorXd vz = Wz.transpose() * N.col(2);
+
+  std::cout << "Normal values distributed." << std::endl;
+
+  Eigen::VectorXd v(vx.rows()+vy.rows()+vz.rows());
+  v << vx, vy, vz;
+
+  std::cout << "V is one vector." << std::endl;
+
+  Eigen::SparseMatrix<double> G;
+  fd_grad(nx, ny, nz, h, G);
+
+  std::cout << "Gradient matrix computed." << std::endl;
+
+  Eigen::ConjugateGradient<Eigen::SparseMatrix<double> > solver;
+  Eigen::SparseMatrix<double> A = G.transpose()*G;
+  Eigen::VectorXd b = G.transpose() * v;
+  solver.compute(A);
+  g = solver.solve(b);
+
+  std::cout << "#iterations:     " << solver.iterations() << std::endl;
+  std::cout << "estimated error: " << solver.error() << std::endl;
+
+  Eigen::VectorXd ones = Eigen::VectorXd::Ones(P.rows());
+  double sigma = double(1. / P.rows()) * ones.transpose() * W * g;
+
+  std::cout << "Sigma computed." << std::endl;
+
+  g.array() -= sigma;
+  g.matrix();
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this
