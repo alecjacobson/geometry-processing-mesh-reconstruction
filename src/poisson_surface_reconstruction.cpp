@@ -1,4 +1,6 @@
 #include "poisson_surface_reconstruction.h"
+#include "fd_grad.h"
+#include "fd_interpolate.h"
 #include <igl/copyleft/marching_cubes.h>
 #include <algorithm>
 
@@ -44,9 +46,54 @@ void poisson_surface_reconstruction(
   }
   Eigen::VectorXd g = Eigen::VectorXd::Zero(nx*ny*nz);
 
-  ////////////////////////////////////////////////////////////////////////////
-  // Add your code here
-  ////////////////////////////////////////////////////////////////////////////
+  // Get staggered gradient matrix
+  Eigen::SparseMatrix<double> G((nx-1)*ny*nz + nx*(ny-1)*nz + nx*ny*(nz-1), nx*ny*nz);
+  fd_grad(nx, ny, nz, h, G);
+
+  // Get interpolated normals
+  Eigen::SparseMatrix<double> Wx(n, (nx-1)*ny*nz), Wy(n, nx*(ny-1)*nz), Wz(n, nx*ny*(nz-1));
+
+  // Get Wx
+  corner(0) = corner(0) + h/2;
+  fd_interpolate(nx-1, ny, nz, h, corner, P, Wx);
+  corner(0) = corner(0) - h/2;  
+
+  // Get Wy
+  corner(1) = corner(1) + h/2;
+  fd_interpolate(nx, ny-1, nz, h, corner, P, Wy);
+  corner(1) = corner(1) - h/2;
+
+  // Get Wz
+  corner(2) = corner(2) + h/2;
+  fd_interpolate(nx, ny, nz-1, h, corner, P, Wz);
+  corner(2) = corner(2) - h/2;  
+
+  // Project normals to staggered grids
+  Eigen::VectorXd vx, vy, vz, tmp, v(3*nx*ny*nz - nx*ny - ny*nz - nx*nz);
+  vx = Eigen::SparseMatrix<double>(Wx.transpose())*N.col(0);
+  vy = Eigen::SparseMatrix<double>(Wy.transpose())*N.col(1);
+  vz = Eigen::SparseMatrix<double>(Wz.transpose())*N.col(2);
+
+  igl::cat(1, vx, vy, tmp);
+  igl::cat(1, tmp, vz, v);
+
+  // Solve
+  Eigen::SparseMatrix<double> Gt = Eigen::SparseMatrix<double>(G.transpose());
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>> solver;
+  solver.compute(Gt*G);
+  g = solver.solve(Gt*v);
+
+
+  // Get interpolation matrix
+  Eigen::SparseMatrix<double> W(n, nx*ny*nz);
+  fd_interpolate(nx, ny, nz, h, corner, P, W);
+  Eigen::MatrixXd ones = (Eigen::MatrixXd::Zero(1, n).array() + 1).matrix(); 
+
+  // Get sigma
+  Eigen::VectorXd sigma = (ones*W*g)/n;
+  
+  // Shift
+  g = (g.array() - sigma(0,0)).matrix();
 
   ////////////////////////////////////////////////////////////////////////////
   // Run black box algorithm to compute mesh from implicit function: this

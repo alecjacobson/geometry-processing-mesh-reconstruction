@@ -1,6 +1,8 @@
 #ifndef FD_PARTIAL_DERIVATIVE_H
 #define FD_PARTIAL_DERIVATIVE_H
 #include <Eigen/Sparse>
+#include <vector>
+
 // Construct a partial derivative matrix for a finite-difference grid in a
 // given direction. Derivative are computed using first-order differences onto
 // a staggered grid
